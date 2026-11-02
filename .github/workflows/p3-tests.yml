@@ -1,0 +1,46 @@
+name: P3 concurrency tests
+on: [push, pull_request]
+
+jobs:
+  concurrency:
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude -Wall -Wextra -Werror -g
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Queue unit tests
+        run: |
+          mkdir -p build
+          gcc $CFLAGS -O2 src/queue.c tests/test_queue.c -o build/test-queue -pthread
+          ./build/test-queue
+
+      - name: Thread pool unit tests
+        run: |
+          gcc $CFLAGS -O2 src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool -pthread
+          ./build/test-threadpool
+
+      - name: Repeat unit tests 20 times (catch rare timing bugs)
+        run: |
+          for i in $(seq 20); do ./build/test-queue >/dev/null && ./build/test-threadpool >/dev/null || exit 1; done
+
+      - name: ThreadSanitizer (data race detection)
+        run: |
+          # Newer runner kernels use more address randomisation than TSan supports.
+          sudo sysctl vm.mmap_rnd_bits=28
+          gcc $CFLAGS -fsanitize=thread src/queue.c tests/test_queue.c -o build/test-queue-tsan -pthread
+          gcc $CFLAGS -fsanitize=thread src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool-tsan -pthread
+          ./build/test-queue-tsan
+          ./build/test-threadpool-tsan
+
+      - name: AddressSanitizer + UndefinedBehaviorSanitizer
+        run: |
+          gcc $CFLAGS -fsanitize=address,undefined src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool-asan -pthread
+          ./build/test-threadpool-asan
+
+      - name: Concurrent server integration tests (with labelled P1 test stub)
+        run: |
+          gcc $CFLAGS -O2 -DWITH_CONCURRENT src/main.c src/options.c src/network.c \
+              src/handler.c src/sequential.c tests/p1_stub.c \
+              src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
+          python3 -m unittest tests.test_concurrent -v
