@@ -2,20 +2,25 @@
 
 ## Passed
 
+- GitHub Linux networking checks passed for implementation commit bb8cc34:
+  [workflow run](https://github.com/abbasikhadija/ConeCurrency/actions/runs/41470634219).
+  The workflow runs make test, covering strict C compilation, the C descriptor-
+  ownership test, and the seven Python networking integration tests using the
+  labelled sequential-only P1 substitute. It also checks Python syntax.
 - Python syntax compilation for tools/ and tests/.
 - Bash syntax checks for run_benchmarks.sh and system_calls.sh.
 - git diff --check.
 
 ## Not run or not verified
 
-- Seven C-server integration tests were skipped: no compiled Linux test binary.
-- C compilation, descriptor-ownership C test, and make targets are not verified.
-- Linux CI is configured; its execution/result is not verified in this report.
+- Seven C-server integration tests were skipped on this Windows machine because
+  no compiled Linux test binary is available locally; Linux CI passed separately.
+- Production make all/concurrent targets remain unverified pending real modules.
 - P1 inventory/statistics implementation and mutex correctness are not supplied.
 - P3 queue/thread pool/concurrent server are not supplied.
 - Overselling, overload behavior, races, production integration, Linux syscall
   demonstration, benchmark collection, and graphs remain unverified.
-- Pull request review, merge, release, and team API signoff remain pending.
+- Team code review, release, and API signoff remain pending.
 
 ## Next verification step
 

@@ -8,9 +8,10 @@ the ice cream shop GUI; no GUI implementation is included in P2's work.
 Shared work includes the
 folder layout, Makefile, protocol, and common headers.
 
-The source files are local implementation, not evidence of passed Linux tests.
-GitHub review, team signoff, production integration, and actual measurements
-remain separate completion gates. No generated results are included.
+P2's implementation has passed the GitHub Linux networking workflow for commit
+bb8cc34; see verification.md for evidence. Team review, API signoff, production
+integration, and actual measurements remain separate completion gates.
+No generated benchmark results are included.
 
 ## Shared setup
 
@@ -18,7 +19,7 @@ remain separate completion gates. No generated results are included.
 | --- | --- |
 | S1 Linux tools | WSL is not installed on this Windows machine; Linux setup pending |
 | S2 Folders | Local src/include/tests/tools/scripts/docs/benchmarks present |
-| S3 Makefile | Written; Linux execution must be verified |
+| S3 Makefile | P2 make test passed on Linux CI; production targets await real modules |
 | S4 Shared protocol/headers | Written from task division; concrete signatures await team review |
 
 On Ubuntu/WSL install: `sudo apt install build-essential git gdb strace netcat-openbsd python3 python3-matplotlib`.
@@ -65,8 +66,8 @@ sequential build explicitly rejects --mode concurrent; it never fakes concurrenc
 `make test` compiles the P2-only test server with strict warnings and runs the
 Python tests. They cover request fragmentation, sold out, malformed and oversized
 input, incomplete EOF, silent timeout, disconnect survival, active-client SIGINT,
-and invalid CLI values. Client tests exercise BOOK and fragmented replies through
-real local sockets. Linux CI is configured but has not run until pushed.
+and invalid CLI values. Linux CI passed make test for implementation commit
+bb8cc34, including the descriptor-ownership test and Python networking tests.
 
 `bash scripts/system_calls.sh` runs strace. Send `printf 'BOOK\n' | nc -N 127.0.0.1 8080`
 from a second terminal. `bash scripts/system_calls.sh PID` lists that server's file descriptors.

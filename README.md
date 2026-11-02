@@ -14,6 +14,24 @@ Ice Cream Ordering Server.
 ## Team
 Three-member Operating Systems project.
 
+## Delivered work and remaining integration
+
+Khadija has delivered the P2 implementation and shared setup listed below.
+GitHub's Linux P2 networking checks passed for implementation commit `bb8cc34`.
+This is a component delivery; the complete application still requires P1 and P3.
+
+| Area | Delivered | Remaining |
+| --- | --- | --- |
+| P2 networking | TCP listener, request handler, sequential server, CLI, timeouts, shutdown, tests | Integration with real P1 booking/statistics and P3 concurrent mode |
+| P2 benchmarks | Measurement driver, CSV output, graph tool, system-call demo script | Run both real modes and collect actual results |
+| Shared setup | Folders, Makefile, Linux test workflow, protocol and C headers | Team review/signoff of interfaces |
+| P1 synchronization | Integration headers and clearly labelled test substitute only | Real booking engine, mutex, statistics, load tester, race proof |
+| P3 concurrency | Integration headers only | Bounded queue, worker pool, concurrent mode and tests |
+| GUI | Assigned to a teammate | Ice cream shop interface |
+
+See [verification evidence and limitations](docs/verification.md). P2 tests use
+a sequential-only P1 substitute; they do not prove concurrent inventory safety.
+
 ## Ice cream shop and team roles
 
 Each BOOK reserves one cone from shared inventory. The core experiment compares
