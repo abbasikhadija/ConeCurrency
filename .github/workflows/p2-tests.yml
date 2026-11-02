@@ -1,0 +1,11 @@
+name: P2 networking tests
+on: [push, pull_request]
+jobs:
+  networking:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test P2 against labelled sequential P1 substitute
+        run: make test
+      - name: Check Python syntax
+        run: python3 -m compileall -q tools tests
