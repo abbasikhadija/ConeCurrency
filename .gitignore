@@ -1,0 +1,19 @@
+# Generated C build files
+/build/
+*.o
+*.a
+*.so
+/conecurrency
+/ticket-server
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local editor and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
