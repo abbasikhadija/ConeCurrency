@@ -8,7 +8,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
-volatile sig_atomic_t server_stop;
+atomic_int server_stop;
 
 int main(void)
 {

@@ -1,13 +1,12 @@
 """P3 integration tests for concurrent mode.
 
-These use a server built with P1's labelled TEST STUB (no mutex), so they
-check the concurrency engine (workers, queue, ERR BUSY, shutdown), NOT
-booking correctness. P1's race-condition proof needs the real booking.c.
+These use real P1 booking/statistics with P2 networking and P3 workers.
+P1's repeated race-condition test provides the complementary inventory check.
 
 Build first:
   gcc -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude -Wall -Wextra -Werror -O2 -g \
       -DWITH_CONCURRENT src/main.c src/options.c src/network.c src/handler.c \
-      src/sequential.c tests/p1_stub.c src/queue.c src/threadpool.c \
+      src/sequential.c src/booking.c src/stats.c src/queue.c src/threadpool.c \
       src/concurrent.c -o build/p3-test-server -pthread
 """
 import os
