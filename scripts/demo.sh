@@ -13,20 +13,23 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-PORT=8080
+PORT="${PORT:-8080}"
 SERVER="./ticket-server"
+LOG=""
+PID=""
 
 check_server_binary() {
-    if [[ ! -x "$SERVER" ]]; then
-        echo "[*] Building ticket-server (concurrent production build)..."
-        make concurrent
-    fi
+    make all
 }
 
 wait_for_server() {
     local max_wait=30
     local count=0
-    while ! nc -z 127.0.0.1 "$PORT" 2>/dev/null; do
+    while ! grep -q '^ConeCurrency .* on 127.0.0.1:' "$LOG"; do
+        if ! kill -0 "$PID" 2>/dev/null; then
+            cat "$LOG" >&2
+            return 1
+        fi
         sleep 0.1
         count=$((count + 1))
         if [[ $count -ge $max_wait ]]; then
@@ -41,8 +44,17 @@ stop_server() {
     if kill -0 "$pid" 2>/dev/null; then
         echo "[*] Gracefully stopping server (PID: $pid) with SIGINT..."
         kill -INT "$pid"
-        wait "$pid" 2>/dev/null || true
     fi
+    wait "$pid"
+    [[ -z "$LOG" ]] || { cat "$LOG"; rm -f "$LOG"; LOG=""; }
+}
+
+start_server() {
+    LOG=$(mktemp)
+    "$SERVER" "$@" >"$LOG" 2>&1 &
+    PID=$!
+    trap 'stop_server "$PID"' EXIT
+    wait_for_server
 }
 
 demo_sequential() {
@@ -51,10 +63,7 @@ demo_sequential() {
     echo "  DEMO 1: SEQUENTIAL SERVER (Single Cashier / Head-of-Line Blocking)    "
     echo "========================================================================"
     echo "Starting sequential server with 5 tickets and 200ms delay per request..."
-    $SERVER --mode sequential --tickets 5 --port "$PORT" --delay-ms 200 &
-    PID=$!
-    trap 'stop_server $PID' EXIT
-    wait_for_server
+    start_server --mode sequential --tickets 5 --port "$PORT" --delay-ms 200
 
     echo "[*] Sending 3 booking requests sequentially..."
     time for i in 1 2 3; do
@@ -72,17 +81,11 @@ demo_concurrent() {
     echo "  DEMO 2: CONCURRENT SERVER (4 Worker Threads / Parallel Speedup)       "
     echo "========================================================================"
     echo "Starting concurrent server with 4 workers and 200ms delay..."
-    $SERVER --mode concurrent --tickets 20 --workers 4 --queue 32 --port "$PORT" --delay-ms 200 &
-    PID=$!
-    trap 'stop_server $PID' EXIT
-    wait_for_server
+    start_server --mode concurrent --tickets 20 --workers 4 --queue 32 --port "$PORT" --delay-ms 200
 
     echo "[*] Bursting 4 requests simultaneously (should complete in ~200ms instead of ~800ms)..."
     time {
-        for i in 1 2 3 4; do
-            printf "BOOK\n" | nc -N 127.0.0.1 "$PORT" &
-        done
-        wait
+        python3 tools/load_test.py --port "$PORT" --users 4 --expect-booked 4
     }
 
     stop_server $PID
@@ -95,13 +98,10 @@ demo_race() {
     echo "  DEMO 3: RACE CONDITION PROOF (1 Ticket vs 20 Concurrent Users)         "
     echo "========================================================================"
     echo "Starting concurrent server with exactly 1 ticket in inventory..."
-    $SERVER --mode concurrent --tickets 1 --workers 8 --queue 32 --port "$PORT" --delay-ms 20 &
-    PID=$!
-    trap 'stop_server $PID' EXIT
-    wait_for_server
+    start_server --mode concurrent --tickets 1 --workers 8 --queue 32 --port "$PORT" --delay-ms 20
 
     echo "[*] Firing 20 concurrent requests using Python load tester..."
-    python3 tools/load_test.py --port "$PORT" --users 20
+    python3 tools/load_test.py --port "$PORT" --users 20 --expect-booked 1 --expect-sold-out 19
 
     echo "[*] Notice: Exactly 1 user secured OK BOOKED, 19 received ERR SOLD_OUT."
     echo "[*] The POSIX mutex completely prevented double-booking / overselling!"
@@ -116,13 +116,10 @@ demo_overload() {
     echo "  DEMO 4: OVERLOAD HANDLING & LOAD SHEDDING (Queue Limit Reached)       "
     echo "========================================================================"
     echo "Starting server with 1 worker, tiny queue of size 1, and 500ms delay..."
-    $SERVER --mode concurrent --tickets 50 --workers 1 --queue 1 --port "$PORT" --delay-ms 500 &
-    PID=$!
-    trap 'stop_server $PID' EXIT
-    wait_for_server
+    start_server --mode concurrent --tickets 50 --workers 1 --queue 1 --port "$PORT" --delay-ms 500
 
     echo "[*] Flooding with 10 concurrent requests; excess must shed via ERR BUSY..."
-    python3 tools/load_test.py --port "$PORT" --users 10
+    python3 tools/load_test.py --port "$PORT" --users 10 --expect-busy-min 1
 
     echo "[*] Notice: Worker serves active client, queue holds 1, remaining shed with ERR BUSY."
 
@@ -135,22 +132,19 @@ demo_invalid() {
     echo "========================================================================"
     echo "  DEMO 5: INVALID REQUEST HANDLING (Malformed & Lowercase Rejections)   "
     echo "========================================================================"
-    $SERVER --mode concurrent --tickets 10 --workers 2 --queue 8 --port "$PORT" --delay-ms 0 &
-    PID=$!
-    trap 'stop_server $PID' EXIT
-    wait_for_server
+    start_server --mode concurrent --tickets 10 --workers 2 --queue 8 --port "$PORT" --delay-ms 0
 
     echo -n "Sending 'book\n' (lowercase): "
-    printf "book\n" | nc -N 127.0.0.1 "$PORT" || true
+    reply=$(printf "book\n" | nc -N 127.0.0.1 "$PORT"); echo "$reply"; [[ "$reply" == 'ERR BAD_REQUEST' ]]
 
     echo -n "Sending 'HELLO\n' (garbage):   "
-    printf "HELLO\n" | nc -N 127.0.0.1 "$PORT" || true
+    reply=$(printf "HELLO\n" | nc -N 127.0.0.1 "$PORT"); echo "$reply"; [[ "$reply" == 'ERR BAD_REQUEST' ]]
 
     echo -n "Sending 'BOOK' (no newline):  "
-    printf "BOOK" | nc -N 127.0.0.1 "$PORT" || true
+    reply=$(printf "BOOK" | nc -N 127.0.0.1 "$PORT"); echo "$reply"; [[ "$reply" == 'ERR BAD_REQUEST' ]]
 
     echo -n "Sending valid 'BOOK\n':        "
-    printf "BOOK\n" | nc -N 127.0.0.1 "$PORT" || true
+    reply=$(printf "BOOK\n" | nc -N 127.0.0.1 "$PORT"); echo "$reply"; [[ "$reply" == 'OK BOOKED' ]]
 
     stop_server $PID
     trap - EXIT
