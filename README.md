@@ -1,95 +1,133 @@
-# OS Project
 # ConeCurrency 🍦
 
-Scalability Analysis of a Concurrent
-Ice Cream Ordering Server.
+ConeCurrency compares sequential and concurrent ice cream ordering using C,
+Linux TCP sockets and POSIX threads. One BOOK reserves one cone from shared
+inventory. Both modes reuse the same handler and mutex-protected booking engine.
 
-## Technologies
-- C
-- Linux
-- POSIX Threads
-- TCP Sockets
-- Python
+## Team contributions preserved
 
-## Team
-Three-member Operating Systems project.
+| Owner | Original components used in the integrated application |
+| --- | --- |
+| P1 — AQ / Abdul Qudoos | Booking mutex, inventory, statistics, load tester, race proof, demo script |
+| P2 — Khadija | Networking, request handler, sequential loop, CLI, benchmarks, shared setup |
+| P3 — concurrency workstream | Bounded queue, worker pool, concurrent accept loop and shutdown |
+| GUI — teammate | No GUI/bridge files are present in this checkout |
 
-## Delivered work and remaining integration
+`make all` now builds one production binary supporting both server modes using
+all three owners' real modules. The P1 test substitute is retained only for P2's
+isolated checks. The BOOK protocol and original module boundaries are preserved.
 
-Khadija has delivered the P2 implementation and shared setup listed below.
-GitHub's Linux P2 networking checks passed for implementation commit `bb8cc34`.
-This is a component delivery; the complete application still requires P1 and P3.
+## Ubuntu fresh checkout
 
-| Area | Delivered | Remaining |
-| --- | --- | --- |
-| P2 networking | TCP listener, request handler, sequential server, CLI, timeouts, shutdown, tests | Benchmarks across full integrated system |
-| P2 benchmarks | Measurement driver, CSV output, graph tool, system-call demo script | Run both real modes and collect actual results |
-| Shared setup | Folders, Makefile, Linux test workflow, protocol and C headers | Fully integrated |
-| P1 synchronization | Real booking engine (`booking.c`), POSIX mutex, thread-safe stats (`stats.c`), load tester (`load_test.py`), race proof (`test_race.py`), demo script (`demo.sh`) | Final joint benchmark run |
-| P3 concurrency | Bounded queue, worker pool, concurrent mode and tests | Final joint benchmark run |
-| GUI | Assigned to a teammate | Ice cream shop interface |
-
-See [verification evidence and limitations](docs/verification.md). P2 tests use
-a sequential-only P1 substitute; they do not prove concurrent inventory safety.
-
-## Ice cream shop and team roles
-
-Each BOOK reserves one cone from shared inventory. The core experiment compares
-sequential and concurrent ticket booking using C, Linux sockets, mutexes, and
-POSIX threads. A teammate owns the ice cream shop GUI; it is outside P2's scope.
-
-The supplied Team Task Division assigns P1 synchronization and load testing,
-P2 networking/sequential server and benchmarks, and P3 queue/thread pool and
-concurrent mode. The user identifies as P2. Other member names are not assigned
-here. See [protocol](docs/protocol.md) and [integration status](docs/integration.md).
-
-## P2 verification before other members deliver their modules
-
-On Linux with GCC, make, and Python 3 installed:
+Verification targets: Ubuntu 22.04 and 24.04, GCC 11+ (C11/POSIX threads), GNU
+Make 4.3+, Python 3.10+, Bash 5. Core Python tools use the standard library;
+Matplotlib is needed only for graphs.
 
 ```sh
+sudo apt-get update
+sudo apt-get install -y build-essential git python3 python3-matplotlib netcat-openbsd strace gdb
+git clone https://github.com/abbasikhadija/ConeCurrency.git
+cd ConeCurrency
+git switch codex/ubuntu-integration
+make all
 make test
-./build/p2-test-server --mode sequential --tickets 10 --port 8080 --delay-ms 20
 ```
 
-This server uses a labelled, unsynchronized TEST STUB for P1. It is only for
-networking checks. It cannot validate concurrency or prevent overselling.
+Switch to the integration branch until it is merged into main. After cloning
+and switching, `bash scripts/setup_ubuntu.sh` installs the same packages, builds
+and tests automatically. Run inside Ubuntu (native, VM or WSL Ubuntu), rather
+than Windows PowerShell. No database, migration, API key, secrets, `.env` file,
+or environment variable is required. Inventory is in memory and resets to
+`--tickets` each time the server starts. It binds to **127.0.0.1** for local
+clients. A browser GUI would need its teammate's TCP bridge; no HTTP bridge is
+included in this checkout.
 
-In another terminal, send a request using netcat:
+## Start and place an order
+
+Terminal 1 (choose one; stop it with Ctrl+C before changing modes):
+
+```sh
+bash scripts/start.sh sequential --tickets 10 --port 8080 --delay-ms 20
+# Or:
+bash scripts/start.sh concurrent --tickets 10 --workers 4 --queue 32 --port 8080 --delay-ms 20
+```
+
+The script builds if needed and executes the same production binary as:
+
+```sh
+./ticket-server --mode concurrent --tickets 10 --workers 4 --queue 32 --port 8080 --delay-ms 20
+```
+
+Terminal 2:
 
 ```sh
 printf 'BOOK\n' | nc -N 127.0.0.1 8080
+python3 tools/load_test.py --port 8080 --users 20 --csv /tmp/conecurrency-orders.csv
 ```
 
-The teammate's GUI can connect using the same BOOK protocol.
+Replies are `OK BOOKED`, `ERR SOLD_OUT`, `ERR BAD_REQUEST`, or `ERR BUSY`, each
+ending in LF. One connection carries one order. Ctrl+C prints final statistics.
+A lost reply can follow a successful booking; clients must not blindly retry.
+If a port is occupied, choose another port for both server and client.
 
-## Production integration
+| Flag | Default | Accepted values |
+| --- | --- | --- |
+| --mode | sequential | sequential or concurrent |
+| --tickets | 10 | 0..2147483647 on supported Ubuntu targets |
+| --workers | 4 | 1..1024 |
+| --queue | 32 | 1..1000000 |
+| --port | 8080 | 1..65535 |
+| --delay-ms | 20 | 0..60000; fake work outside all locks |
 
-`make all` requires P1's real src/booking.c and src/stats.c. `make concurrent`
-also requires P3's src/queue.c, src/threadpool.c and src/concurrent.c. These files
-have not been supplied; missing modules intentionally fail the build.
+## Full verification and original demos
 
 ```sh
-make all
-./ticket-server --mode sequential --tickets 10 --workers 4 --queue 32 --port 8080 --delay-ms 20
+make test
+bash scripts/demo.sh all
+make unsafe
+python3 tests/test_race.py --demo
 ```
 
-After both modes and the real inventory have passed integration tests:
+`make test` builds and runs booking, queue, pool and descriptor-ownership C
+checks; P2's isolated networking tests; the same networking tests with real
+inventory; P3 concurrent tests; P1's 20 repeated one-ticket/20-client checks;
+and integrated client/CSV/startup/restart tests. Required binaries are built
+first to avoid missing-binary skips. Focused targets remain: `make test-p1`,
+`make test-p2`, `make test-p3`, `make test-race`. `make concurrent` is an alias
+for the dual-mode production build.
+
+The optional unsafe demonstration remains at `build/ticket-server-unsafe` and
+never replaces production. Unsafe overselling depends on scheduling; a run may
+show no violation. No finite set of tests proves all concurrency bugs absent.
+`PORT=8081 bash scripts/demo.sh all` changes the demo port. Test-only overrides:
+P2_TEST_SERVER, P3_TEST_SERVER, SAFE_SERVER, UNSAFE_SERVER; SANITIZER_THREADS=1
+includes ThreadSanitizer's helper in the thread-count assertion.
+
+## Benchmarks, graphs and system calls
 
 ```sh
 bash scripts/run_benchmarks.sh
+# Substitute the timestamp directory printed by the driver:
 python3 tools/plot_benchmarks.py benchmarks/results/RUN_DIRECTORY/summary.csv
+bash scripts/system_calls.sh
+# Send a BOOK from another terminal; for a running server's descriptors:
+bash scripts/system_calls.sh SERVER_PID
 ```
 
-Benchmarks produce measured CSV/logs/configuration and optional graphs. No
-performance claims or concurrency correctness results have been recorded yet.
+Benchmarks measure both real modes at 1/10/50/100 users, three repetitions,
+identical stock and fake work. CSV, server logs and configuration/commit identity
+are stored under benchmarks/results. Graphs show actual measurements only.
+Ubuntu CI uploads those files as artifacts. Shared-runner measurements verify
+the pipeline; they are not controlled performance claims.
+
+See [protocol](docs/protocol.md), [integration notes](docs/integration.md), and
+[verification evidence](docs/verification.md). The original component design
+explanations follow; current setup/build instructions above take precedence.
 
 ## P3 concurrency engine
 
-**Status update:** P3 has delivered `src/queue.c`, `src/threadpool.c` and
-`src/concurrent.c` (merged in PR #2). The P3 rows and notes above were written
-before that delivery; the only remaining P3 dependency is P1's real
-`src/booking.c` and `src/stats.c`.
+**Status update:** P3 delivered queue, pool and concurrent mode in PR #2.
+These now connect to P1's real inventory/statistics through P2's shared handler.
 
 P3 turns the server from "one cashier" into "many cashiers". The main thread
 only accepts customers; a fixed team of worker threads serves them.
@@ -132,9 +170,9 @@ gcc $CFLAGS -O2 src/queue.c src/threadpool.c tests/test_threadpool.c -o build/te
 # Data race detection
 gcc $CFLAGS -fsanitize=thread src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool-tsan -pthread && ./build/test-threadpool-tsan
 
-# Full server in concurrent mode with the labelled P1 TEST STUB, plus integration tests
+# Full server in concurrent mode with real P1 inventory, plus integration tests
 gcc $CFLAGS -O2 -DWITH_CONCURRENT src/main.c src/options.c src/network.c src/handler.c src/sequential.c \
-    tests/p1_stub.c src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
+    src/booking.c src/stats.c src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
 python3 -m unittest tests.test_concurrent -v
 ```
 
@@ -142,9 +180,8 @@ The same checks run automatically on every push and pull request in
 `.github/workflows/p3-tests.yml`, including ThreadSanitizer, AddressSanitizer
 and UndefinedBehaviorSanitizer.
 
-The stub build checks the concurrency engine only (workers, queue, `ERR BUSY`,
-shutdown). It has no mutex, so it **cannot** prove that tickets are never
-oversold; that proof needs P1's real `booking.c`.
+This build tests workers, queue rejection and shutdown with real inventory.
+The repeated inventory invariant check is supplied by `make test-race`.
 
 ### Try concurrent mode
 
@@ -165,7 +202,7 @@ Overload: restart terminal 1 with `--workers 1 --queue 1 --delay-ms 500` and run
 the same burst; some customers receive `ERR BUSY` and the server keeps working.
 Press Ctrl+C in terminal 1 for a clean shutdown with final statistics.
 
-Once P1's modules exist, `make concurrent` builds the production server:
+`make concurrent` builds the integrated production server:
 
 ```sh
 make concurrent
@@ -193,7 +230,7 @@ Worker N ──┘     [ Critical Section: Check     └── ERR SOLD_OUT (inv
 | `src/booking.c` | The inventory vault | Shared counter of cones (`remaining`). Wrapped in a POSIX mutex (`pthread_mutex_t`). Atomically tests `remaining > 0` and decrements. In unsafe demo mode (`-DUNSAFE_MODE`), the lock is omitted to prove race hazards. |
 | `src/stats.c` | The ledger | Thread-safe counters for `BOOKED`, `SOLD_OUT`, `BUSY`, and `BAD`. Synchronized with a dedicated mutex and printed on server termination. |
 | `tests/test_booking.c` | Unit validation | Standalone assertions verifying single-thread depletion and 100 concurrent threads competing for 50 tickets. |
-| `tools/load_test.py` | The rush hour simulator | Python tool using `threading.Barrier` so all user threads send `BOOK\n` at the exact same microsecond, calculating throughput, median latency, and error breakdown. |
+| `tools/load_test.py` | The rush hour simulator | Python tool using `threading.Barrier` so all user threads send `BOOK\n` after a shared barrier release (scheduling varies), calculating throughput, median latency, and error breakdown. |
 | `tests/test_race.py` | Race condition proof | Runs 1 ticket vs 20 concurrent users over 20 iterations. In safe mode, `booked == 1` always; in unsafe mode, overselling is detected. |
 | `scripts/demo.sh` | Evaluation script | Shell runner demonstrating sequential, concurrent, race condition, overload shedding, and invalid request scenarios. |
 
@@ -209,7 +246,7 @@ Worker N ──┘     [ Critical Section: Check     └── ERR SOLD_OUT (inv
 # Run booking and concurrency unit tests
 make build/test-booking && ./build/test-booking
 
-# Run with ThreadSanitizer (proves zero data races)
+# Run with ThreadSanitizer (detects races in the tested execution)
 gcc -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude -Wall -Wextra -Werror -g \
     -fsanitize=thread src/booking.c src/stats.c tests/test_booking.c -o build/test-booking-tsan -pthread
 ./build/test-booking-tsan

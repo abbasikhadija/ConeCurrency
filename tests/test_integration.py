@@ -9,6 +9,7 @@ import socket
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,19 +37,27 @@ def request(port, message):
 
 class IntegratedTests(unittest.TestCase):
     @contextmanager
-    def server(self, mode, tickets=3, port=None):
+    def server(self, mode, tickets=3, port=None, use_wrapper=False):
         self.assertTrue(SERVER.is_file(), "Run make all before integration tests")
         port = port or free_port()
+        command = (["bash", str(ROOT / "scripts/start.sh"), mode] if use_wrapper else
+                   [str(SERVER), "--mode", mode])
         process = subprocess.Popen(
-            [str(SERVER), "--mode", mode, "--tickets", str(tickets),
+            command + ["--tickets", str(tickets),
              "--workers", "4", "--queue", "256", "--delay-ms", "0", "--port", str(port)],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0)
         stats = {}
         try:
             with selectors.DefaultSelector() as selector:
                 selector.register(process.stdout, selectors.EVENT_READ)
-                self.assertTrue(selector.select(5), "Server readiness timeout")
-                self.assertIn(f"ConeCurrency {mode}".encode(), process.stdout.readline())
+                deadline = time.monotonic() + 5
+                while True:
+                    self.assertTrue(selector.select(max(0, deadline - time.monotonic())),
+                                    "Server readiness timeout")
+                    line = process.stdout.readline()
+                    self.assertTrue(line, "Server exited before readiness")
+                    if f"ConeCurrency {mode}".encode() in line:
+                        break
             yield port, stats
         finally:
             if process.poll() is None:
@@ -103,6 +112,11 @@ class IntegratedTests(unittest.TestCase):
         for mode in ("sequential", "concurrent"):
             with self.server(mode, tickets=1, port=port):
                 self.assertEqual(request(port, b"BOOK\n"), b"OK BOOKED\n")
+
+    def test_startup_script_serves_real_bookings(self):
+        with self.server("concurrent", tickets=1, use_wrapper=True) as (port, _):
+            self.assertEqual(request(port, b"BOOK\n"), b"OK BOOKED\n")
+            self.assertEqual(request(port, b"BOOK\n"), b"ERR SOLD_OUT\n")
 
 
 if __name__ == "__main__":

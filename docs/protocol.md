@@ -42,5 +42,6 @@ Initialize inventory and handler configuration before starting workers.
 ## Agreement status
 
 BOOK/replies/flags/descriptor ownership come from the supplied task division.
-Concrete C signatures, limits, and strict LF behavior are supplied here for team
-review. They have not been approved by the other members or merged on GitHub.
+The merged components use the shared C signatures, limits and strict LF behavior
+documented here. Integration preserves those interfaces and response bytes.
+Formal team signoff is separate from build and runtime verification.
