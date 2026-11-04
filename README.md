@@ -224,9 +224,94 @@ python3 tests/test_race.py --demo
 
 # Run unified demo script
 bash scripts/demo.sh all
-
-# Launch the Artisanal Ice Cream Parlour Web Dashboard (Zero-dependency, works on Ubuntu/WSL)
-python3 tools/gui.py
-# Or launch the native X11 Tkinter desktop app:
-python3 tools/desktop_gui.py
 ```
+
+## Ice Cream Parlour UI (Interactive Gelateria Dashboard)
+
+The project includes an artisanal **Ice Cream Parlour UI** designed to visually showcase the C server's concurrency, queue dynamics, and mutex inventory protection in real time. It avoids generic templates in favor of a vintage Italian gelateria aesthetic (warm cream, waffle brown, and strawberry/pistachio accents).
+
+```
+[ Browser / Tkinter UI ]
+          │
+          │ Raw TCP Socket (127.0.0.1:8080)
+          ▼
+┌────────────────────────────────────────────────────────┐
+│  ConeCurrency C Server (Sequential or Concurrent)      │
+│  - Door Manager / Accept Loop                          │
+│  - Bounded FIFO Queue (Load Shedding -> ERR BUSY)      │
+│  - Worker Thread Pool (Cashiers)                       │
+│  - Mutex-Protected Shared Inventory (booking.c)       │
+└────────────────────────────────────────────────────────┘
+```
+
+### UI Features
+
+- **Live Waffle Cone Visualizer:** Each successful booking (`OK BOOKED`) dynamically drops a new flavored gelato scoop (strawberry, pistachio, vanilla, chocolate) onto the waffle cone.
+- **Real-Time POS Register Tape:** A live ticker prints the exact millisecond round-trip response time and reply status for every TCP request.
+- **Barrier-Synchronized Rush Hours:** The "Rush Hour" (10 users) and "Flash Mob" (25 users) buttons use Python's `threading.Barrier` to synchronize client threads, ensuring every request hits the server at the exact same microsecond to visually demonstrate worker pool concurrency and queue shedding (`ERR BUSY`).
+- **Resilience Testing:** The "Send Bad Request" button transmits malformed payloads (`GARBAGE_PAYLOAD\n`) to verify that the server rejects invalid commands without crashing.
+
+---
+
+### How to Run the UI
+
+You can choose between the **zero-dependency Web Dashboard** (recommended) or the **native X11 Desktop App**.
+
+#### Option 1: Web-Based Dashboard (Recommended for Ubuntu & WSL)
+
+The web dashboard uses only Python 3's built-in standard library (`http.server`, `socket`, `threading`). It requires **zero pip dependencies**, runs out-of-the-box on native Ubuntu or inside Windows Subsystem for Linux (WSL), and automatically opens in your default browser.
+
+1. **Terminal 1: Start the C Ticket Server**
+   ```bash
+   # Build and launch concurrent server with 20 tickets, 4 workers, and 100ms delay:
+   make concurrent
+   ./ticket-server --mode concurrent --tickets 20 --workers 4 --queue 16 --port 8080 --delay-ms 100
+   ```
+
+2. **Terminal 2: Launch the Web UI**
+   ```bash
+   make gui
+   # Or directly:
+   python3 tools/gui.py
+   ```
+   * The dashboard will start at `http://127.0.0.1:5050` and automatically pop open in your browser.
+   * If running inside headless SSH, simply forward port `5050` or open `http://<ip-address>:5050`.
+
+---
+
+#### Option 2: Native Desktop Window App (Tkinter)
+
+If you prefer a native desktop application window running via X11/Wayland on Ubuntu desktop:
+
+1. **Install Tkinter (if not already installed on Ubuntu):**
+   ```bash
+   sudo apt update && sudo apt install -y python3-tk
+   ```
+
+2. **Terminal 1: Start the C Ticket Server**
+   ```bash
+   ./ticket-server --mode concurrent --tickets 20 --workers 4 --queue 16 --port 8080 --delay-ms 100
+   ```
+
+3. **Terminal 2: Launch the Desktop Client**
+   ```bash
+   make desktop-gui
+   # Or directly:
+   python3 tools/desktop_gui.py
+   ```
+
+---
+
+### Demonstrating Concurrency Live from the UI
+
+To demonstrate the operating system concepts live in a presentation or lab evaluation:
+
+1. **Single Order vs. Rush Hour:**
+   - Click **Order 1 Cone (BOOK)** $\rightarrow$ Notice the single ticket print on the register tape in ~100ms and a scoop added to the cone.
+   - Click **Rush Hour (10 Cones)** $\rightarrow$ 10 orders hit simultaneously. With 4 worker threads, 4 orders are served in parallel (~100ms), followed immediately by the next batches.
+2. **Queue Overload & Load Shedding:**
+   - Restart the server with a tiny queue: `./ticket-server --mode concurrent --workers 1 --queue 2 --delay-ms 500`.
+   - Click **Flash Mob (25 Cones)** in the UI $\rightarrow$ Watch the register tape immediately log orange `ERR BUSY` entries, proving that the bounded queue safely rejects excess connections without server crashing.
+3. **Inventory Exhaustion:**
+   - Start the server with only 5 tickets: `./ticket-server --mode concurrent --tickets 5 --workers 4`.
+   - Click **Rush Hour (10 Cones)** $\rightarrow$ Exactly 5 orders succeed (`OK BOOKED`), and the remaining 5 immediately report red `ERR SOLD_OUT`.
