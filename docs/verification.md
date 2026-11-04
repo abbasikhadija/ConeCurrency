@@ -10,6 +10,12 @@ was verified on GitHub-hosted Ubuntu runners, not inferred from a Windows build.
 
 ## Ubuntu execution evidence
 
+- [Final full run at 9cb379b](https://github.com/abbasikhadija/ConeCurrency/actions/runs/41854362912)
+  passed all jobs: Ubuntu 22.04, Ubuntu 24.04 and full-server ThreadSanitizer.
+  Both Ubuntu jobs ran the exact setup/start scripts, complete tests, all demo
+  scenarios, the unsafe demonstration, benchmark collection and graph creation.
+  Each uploaded its measured benchmark artifacts. Subsequent report-only edits
+  do not change the verified executable, scripts, tests or configuration.
 - [Complete cross-version run at 98993de](https://github.com/abbasikhadija/ConeCurrency/actions/runs/41852900194)
   passed on Ubuntu 22.04 and 24.04, plus full-server ThreadSanitizer on Ubuntu 24.04.
 - [Setup/start script and integration run at 7ed7e70](https://github.com/abbasikhadija/ConeCurrency/actions/runs/41853709816)
