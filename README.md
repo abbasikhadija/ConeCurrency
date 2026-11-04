@@ -27,7 +27,7 @@ This is a component delivery; the complete application still requires P1 and P3.
 | Shared setup | Folders, Makefile, Linux test workflow, protocol and C headers | Fully integrated |
 | P1 synchronization | Real booking engine (`booking.c`), POSIX mutex, thread-safe stats (`stats.c`), load tester (`load_test.py`), race proof (`test_race.py`), demo script (`demo.sh`) | Final joint benchmark run |
 | P3 concurrency | Bounded queue, worker pool, concurrent mode and tests | Final joint benchmark run |
-| GUI | Assigned to a teammate | Ice cream shop interface |
+| GUI | Artisanal Ice Cream Parlour Web UI (`tools/gui.py`) & Desktop UI (`tools/desktop_gui.py`) | Ready to run |
 
 See [verification evidence and limitations](docs/verification.md). P2 tests use
 a sequential-only P1 substitute; they do not prove concurrent inventory safety.
@@ -224,4 +224,9 @@ python3 tests/test_race.py --demo
 
 # Run unified demo script
 bash scripts/demo.sh all
+
+# Launch the Artisanal Ice Cream Parlour Web Dashboard (Zero-dependency, works on Ubuntu/WSL)
+python3 tools/gui.py
+# Or launch the native X11 Tkinter desktop app:
+python3 tools/desktop_gui.py
 ```

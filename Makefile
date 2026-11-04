@@ -8,7 +8,7 @@ P1_SOURCES = src/booking.c src/stats.c
 P3_SOURCES = src/queue.c src/threadpool.c src/concurrent.c
 HEADERS = $(wildcard include/*.h)
 
-.PHONY: all clean test test-p1 test-race test-all run-sequential concurrent unsafe
+.PHONY: all clean test test-p1 test-race test-all run-sequential concurrent unsafe gui desktop-gui
 
 all: ticket-server
 
@@ -55,6 +55,12 @@ test-all: test-p1 test
 
 run-sequential: ticket-server
 	./ticket-server --mode sequential --tickets 10 --port 8080 --delay-ms 20
+
+gui:
+	$(PYTHON) tools/gui.py
+
+desktop-gui:
+	$(PYTHON) tools/desktop_gui.py
 
 clean:
 	rm -rf build ticket-server
