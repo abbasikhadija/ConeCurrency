@@ -36,9 +36,12 @@ class ConcurrentTests(unittest.TestCase):
         self.assertIn(b"ConeCurrency concurrent", self.process.stdout.readline())
 
     def tearDown(self):
-        if getattr(self, "process", None) and self.process.poll() is None:
-            self.process.send_signal(signal.SIGINT)
-            self.process.communicate(timeout=5)
+        if getattr(self, "process", None):
+            if self.process.poll() is None:
+                self.process.send_signal(signal.SIGINT)
+            _, error = self.process.communicate(timeout=5)
+            self.assertEqual(self.process.returncode, 0, error)
+            self.assertEqual(error, b"", "Unexpected runtime/sanitizer diagnostics")
 
     def request(self, results=None):
         with socket.create_connection(("127.0.0.1", self.port), timeout=5) as client:
@@ -78,12 +81,13 @@ class ConcurrentTests(unittest.TestCase):
         self.start(workers=4)
         # The ready line is printed just before the pool starts, so wait briefly.
         deadline = time.monotonic() + 2
+        expected = 1 + 4 + int(os.environ.get("SANITIZER_THREADS", "0"))
         while time.monotonic() < deadline:
             tasks = os.listdir(f"/proc/{self.process.pid}/task")
-            if len(tasks) == 1 + 4:
+            if len(tasks) == expected:
                 break
             time.sleep(0.05)
-        self.assertEqual(len(tasks), 1 + 4, "expected main thread + 4 workers")
+        self.assertEqual(len(tasks), expected, "expected main + workers + declared sanitizer helper")
 
     def test_parallel_workers_are_faster_than_one(self):
         # 8 users x 200 ms of fake work: 1 worker needs ~1.6 s, 4 workers ~0.4 s.
