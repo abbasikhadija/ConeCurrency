@@ -10,8 +10,8 @@ inventory. Both modes reuse the same handler and mutex-protected booking engine.
 | --- | --- |
 | P1 — AQ / Abdul Qudoos | Booking mutex, inventory, statistics, load tester, race proof, demo script |
 | P2 — Khadija | Networking, request handler, sequential loop, CLI, benchmarks, shared setup |
-| P3 — concurrency workstream | Bounded queue, worker pool, concurrent accept loop and shutdown |
-| GUI — teammate | No GUI/bridge files are present in this checkout |
+| P3 — Sadia-Fatima | Bounded queue, worker pool, concurrent accept loop and shutdown |
+| GUI — Abdul Qudoos | No GUI/bridge files are present in this checkout |
 
 `make all` now builds one production binary supporting both server modes using
 all three owners' real modules. The P1 test substitute is retained only for P2's
