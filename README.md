@@ -28,13 +28,12 @@ sudo apt-get update
 sudo apt-get install -y build-essential git python3 python3-matplotlib netcat-openbsd strace gdb
 git clone https://github.com/abbasikhadija/ConeCurrency.git
 cd ConeCurrency
-git switch codex/ubuntu-integration
 make all
 make test
 ```
 
-Switch to the integration branch until it is merged into main. After cloning
-and switching, `bash scripts/setup_ubuntu.sh` installs the same packages, builds
+The integrated application is available on main. After cloning,
+`bash scripts/setup_ubuntu.sh` installs the same packages, builds
 and tests automatically. Run inside Ubuntu (native, VM or WSL Ubuntu), rather
 than Windows PowerShell. No database, migration, API key, secrets, `.env` file,
 or environment variable is required. Inventory is in memory and resets to
