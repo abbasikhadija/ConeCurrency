@@ -1,0 +1,35 @@
+name: P1 synchronization tests
+on: [push, pull_request]
+
+jobs:
+  synchronization:
+    runs-on: ubuntu-latest
+    env:
+      CFLAGS: -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude -Wall -Wextra -Werror -g
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Booking unit tests
+        run: |
+          mkdir -p build
+          gcc $CFLAGS -O2 src/booking.c src/stats.c tests/test_booking.c -o build/test-booking -pthread
+          ./build/test-booking
+
+      - name: ThreadSanitizer on P1 booking and stats
+        run: |
+          sudo sysctl vm.mmap_rnd_bits=28
+          gcc $CFLAGS -fsanitize=thread src/booking.c src/stats.c tests/test_booking.c -o build/test-booking-tsan -pthread
+          ./build/test-booking-tsan
+
+      - name: Build production concurrent server with real P1 modules
+        run: make concurrent
+
+      - name: Race condition verification (Safe Mode: Mutex Protected)
+        run: |
+          python3 tests/test_race.py
+
+      - name: Build unsafe server and run comparative demo
+        run: |
+          make unsafe
+          python3 tests/test_race.py --demo
+

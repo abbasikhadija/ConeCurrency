@@ -22,11 +22,11 @@ This is a component delivery; the complete application still requires P1 and P3.
 
 | Area | Delivered | Remaining |
 | --- | --- | --- |
-| P2 networking | TCP listener, request handler, sequential server, CLI, timeouts, shutdown, tests | Integration with real P1 booking/statistics and P3 concurrent mode |
+| P2 networking | TCP listener, request handler, sequential server, CLI, timeouts, shutdown, tests | Benchmarks across full integrated system |
 | P2 benchmarks | Measurement driver, CSV output, graph tool, system-call demo script | Run both real modes and collect actual results |
-| Shared setup | Folders, Makefile, Linux test workflow, protocol and C headers | Team review/signoff of interfaces |
-| P1 synchronization | Integration headers and clearly labelled test substitute only | Real booking engine, mutex, statistics, load tester, race proof |
-| P3 concurrency | Integration headers only | Bounded queue, worker pool, concurrent mode and tests |
+| Shared setup | Folders, Makefile, Linux test workflow, protocol and C headers | Fully integrated |
+| P1 synchronization | Real booking engine (`booking.c`), POSIX mutex, thread-safe stats (`stats.c`), load tester (`load_test.py`), race proof (`test_race.py`), demo script (`demo.sh`) | Final joint benchmark run |
+| P3 concurrency | Bounded queue, worker pool, concurrent mode and tests | Final joint benchmark run |
 | GUI | Assigned to a teammate | Ice cream shop interface |
 
 See [verification evidence and limitations](docs/verification.md). P2 tests use
@@ -173,3 +173,55 @@ make concurrent
 ```
 
 Full design, timelines and tests: [P3 concurrency engine](docs/CONCURRENCY_ENGINE.md).
+
+## P1 synchronization engine
+
+**Status update:** Person 1 (AQ) has delivered `src/booking.c`, `src/stats.c`, unit tests in `tests/test_booking.c`, the barrier-synchronized Python load tester `tools/load_test.py`, the race condition verification suite `tests/test_race.py`, and the unified demo script `scripts/demo.sh`.
+
+P1 guarantees that no matter how many worker threads or simultaneous client requests arrive, the shared cone inventory is never oversold or double-booked.
+
+```
+Worker 1 ──┐                                   ┌── OK BOOKED (inventory decremented)
+Worker 2 ──┼──► pthread_mutex_lock(&lock) ──► ┤
+Worker N ──┘     [ Critical Section: Check     └── ERR SOLD_OUT (inventory == 0)
+                 and decrement remaining ]
+                 pthread_mutex_unlock(&lock)
+```
+
+| File | Ice cream shop | What it does |
+| --- | --- | --- |
+| `src/booking.c` | The inventory vault | Shared counter of cones (`remaining`). Wrapped in a POSIX mutex (`pthread_mutex_t`). Atomically tests `remaining > 0` and decrements. In unsafe demo mode (`-DUNSAFE_MODE`), the lock is omitted to prove race hazards. |
+| `src/stats.c` | The ledger | Thread-safe counters for `BOOKED`, `SOLD_OUT`, `BUSY`, and `BAD`. Synchronized with a dedicated mutex and printed on server termination. |
+| `tests/test_booking.c` | Unit validation | Standalone assertions verifying single-thread depletion and 100 concurrent threads competing for 50 tickets. |
+| `tools/load_test.py` | The rush hour simulator | Python tool using `threading.Barrier` so all user threads send `BOOK\n` at the exact same microsecond, calculating throughput, median latency, and error breakdown. |
+| `tests/test_race.py` | Race condition proof | Runs 1 ticket vs 20 concurrent users over 20 iterations. In safe mode, `booked == 1` always; in unsafe mode, overselling is detected. |
+| `scripts/demo.sh` | Evaluation script | Shell runner demonstrating sequential, concurrent, race condition, overload shedding, and invalid request scenarios. |
+
+### Key design decisions
+
+- **Shortest possible critical section:** Artificial delays and network I/O occur completely outside the mutex. Threads only hold the lock for the single memory comparison and decrement (~nanoseconds).
+- **Deadlock prevention:** No thread ever holds the queue lock and inventory lock at the same time.
+- **Barrier synchronization:** The Python load tester synchronizes all threads with `threading.Barrier`, ensuring maximum concurrency collision.
+
+### Run P1's checks
+
+```sh
+# Run booking and concurrency unit tests
+make build/test-booking && ./build/test-booking
+
+# Run with ThreadSanitizer (proves zero data races)
+gcc -std=c11 -D_POSIX_C_SOURCE=200809L -Iinclude -Wall -Wextra -Werror -g \
+    -fsanitize=thread src/booking.c src/stats.c tests/test_booking.c -o build/test-booking-tsan -pthread
+./build/test-booking-tsan
+
+# Run race condition verification (20 iterations)
+make concurrent
+python3 tests/test_race.py
+
+# Run comparative Safe vs Unsafe demonstration
+make unsafe
+python3 tests/test_race.py --demo
+
+# Run unified demo script
+bash scripts/demo.sh all
+```
