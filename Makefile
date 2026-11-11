@@ -62,5 +62,11 @@ gui:
 desktop-gui:
 	$(PYTHON) tools/desktop_gui.py
 
+web:
+	npm --prefix web run dev:all
+
+test-web:
+	npm --prefix web test
+
 clean:
 	rm -rf build ticket-server

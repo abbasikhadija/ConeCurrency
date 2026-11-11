@@ -228,15 +228,36 @@ bash scripts/demo.sh all
 
 ## Ice Cream Parlour UI (Interactive Gelateria Dashboard)
 
-The project includes an artisanal **Ice Cream Parlour UI** designed to visually showcase the C server's concurrency, queue dynamics, and mutex inventory protection in real time. It avoids generic templates in favor of a vintage Italian gelateria aesthetic (warm cream, waffle brown, and strawberry/pistachio accents).
+The project includes two visual dashboard options:
+1. **Modern Production Web App (`web/`):** React 18 + Vite + TypeScript + Framer Motion + Node.js TCP/WebSocket Bridge + Interactive OS Learn Section (CSC-251L).
+2. **Lightweight Python & Desktop Clients (`tools/`):** Zero-dependency Python HTTP server (`tools/gui.py`) and Tkinter client (`tools/desktop_gui.py`).
+
+### Running the React 18 + Node.js Web Dashboard (`web/`)
+
+```bash
+# 1. Start all components with a simulated mock C backend:
+cd web
+npm run dev:all
+
+# 2. Or point to your real compiled C concurrent server:
+# Terminal 1:
+./ticket-server --mode concurrent --tickets 50 --workers 4 --queue 16 --port 8080 --delay-ms 20
+# Terminal 2:
+npm run dev:bridge &
+npm run dev
+```
+
+Visit `http://127.0.0.1:5173` in your browser. All unit, component, and bridge integration tests run via `npm test`.
+
+---
 
 ```
-[ Browser / Tkinter UI ]
+[ React 18 UI / Desktop ]
           │
-          │ Raw TCP Socket (127.0.0.1:8080)
+          │ WebSocket / TCP Bridge (Port 3001)
           ▼
 ┌────────────────────────────────────────────────────────┐
-│  ConeCurrency C Server (Sequential or Concurrent)      │
+│  ConeCurrency C Server (or Mock TCP Backend) :8080     │
 │  - Door Manager / Accept Loop                          │
 │  - Bounded FIFO Queue (Load Shedding -> ERR BUSY)      │
 │  - Worker Thread Pool (Cashiers)                       │
