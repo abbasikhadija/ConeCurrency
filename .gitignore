@@ -17,3 +17,10 @@ venv/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Node dependencies and build output
+node_modules/
+dist/
+coverage/
+.playwright/
+test-results/

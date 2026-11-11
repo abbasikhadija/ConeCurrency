@@ -1,0 +1,16 @@
+{
+  "name": "conecurrency-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "dev:bridge": "npm --prefix web run dev:bridge",
+    "dev:mock": "npm --prefix web run dev:mock",
+    "dev:all": "npm --prefix web run dev:all",
+    "build": "npm --prefix web run build",
+    "test": "npm --prefix web test",
+    "test:e2e": "npm --prefix web run test:e2e",
+    "lint": "npm --prefix web run lint"
+  }
+}
+

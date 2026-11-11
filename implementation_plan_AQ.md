@@ -30,6 +30,7 @@
 | **T7** | Makefile Integration & Production Compilation | `Makefile` | Completed | `src/booking.c`, `src/stats.c` |
 | **T8** | GitHub Actions Workflow for P1 Validation | `.github/workflows/p1-tests.yml` | Completed | T1–T5 |
 | **T9** | Documentation & Presentation Guide | `README.md` (P1 Section) | Completed | All tasks |
+| **T10** | Artisanal Ice Cream Parlour UI & Desktop Dashboard | `tools/gui.py`, `tools/desktop_gui.py` | Completed | Full stack |
 
 ---
 
