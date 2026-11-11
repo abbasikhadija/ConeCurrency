@@ -7,6 +7,7 @@ all threads fire at the exact same moment to stress concurrency and trigger race
 
 import argparse
 import csv
+import math
 import socket
 import statistics
 import sys
@@ -24,21 +25,34 @@ def parse_args():
     parser.add_argument("--timeout", type=float, default=5.0, help="Socket timeout in seconds (default: 5.0)")
     parser.add_argument("--csv", dest="csv_path", default=None, help="Optional CSV file to output raw results")
     parser.add_argument("--quiet", action="store_true", help="Print summary only")
-    return parser.parse_args()
+    parser.add_argument("--expect-booked", type=int, help="Fail unless exactly this many orders book")
+    parser.add_argument("--expect-sold-out", type=int, help="Fail unless exactly this many are sold out")
+    parser.add_argument("--expect-busy-min", type=int, help="Fail unless at least this many are busy")
+    args = parser.parse_args()
+    if not 1 <= args.users <= 1000 or not 1 <= args.port <= 65535:
+        parser.error("users must be 1..1000 and port must be 1..65535")
+    if not math.isfinite(args.timeout) or args.timeout <= 0:
+        parser.error("timeout must be a finite positive number")
+    for name in ("expect_booked", "expect_sold_out", "expect_busy_min"):
+        if getattr(args, name) is not None and getattr(args, name) < 0:
+            parser.error("expected counts must be nonnegative")
+    return args
 
 
 def client_worker(user_id, host, port, timeout, barrier, results):
     """Worker simulating one user sending BOOK\\n after barrier release."""
     status = "ERROR"
     latency_ms = 0.0
+    started_at = time.time()
 
     try:
-        # Pre-connect to align socket connection and synchronize firing
+        # Release before connecting: preconnected users can occupy all server
+        # workers while the barrier waits for users stuck in the TCP backlog.
+        barrier.wait(timeout=30)
+        start = time.perf_counter()
+        started_at = time.time()
         with socket.create_connection((host, port), timeout=timeout) as sock:
             sock.settimeout(timeout)
-            barrier.wait(timeout=30)  # Wait for all users to be ready
-
-            start = time.perf_counter()
             sock.sendall(b"BOOK\n")
 
             response = bytearray()
@@ -63,7 +77,7 @@ def client_worker(user_id, host, port, timeout, barrier, results):
             else:
                 status = f"UNKNOWN ({resp_str})"
     except (socket.timeout, OSError) as exc:
-        latency_ms = 0.0
+        latency_ms = (time.perf_counter() - start) * 1000.0
         status = f"FAIL ({type(exc).__name__})"
     except threading.BrokenBarrierError:
         status = "BARRIER_TIMEOUT"
@@ -73,10 +87,13 @@ def client_worker(user_id, host, port, timeout, barrier, results):
         "status": status,
         "latency_ms": latency_ms,
         "timestamp": time.time(),
+        "started_at": started_at,
     })
 
 
 def run_load_test(host, port, users, timeout, csv_path=None, quiet=False):
+    if not 1 <= users <= 1000 or not 1 <= port <= 65535 or timeout <= 0 or not math.isfinite(timeout):
+        raise ValueError("Expected users 1..1000, port 1..65535, finite positive timeout")
     barrier = threading.Barrier(users)
     results = []
     threads = []
@@ -104,7 +121,7 @@ def run_load_test(host, port, users, timeout, csv_path=None, quiet=False):
     latencies = []
     for r in results:
         status_counts[r["status"]] = status_counts.get(r["status"], 0) + 1
-        if r["latency_ms"] > 0:
+        if r["status"] in {"BOOKED", "SOLD_OUT", "BUSY", "BAD_REQUEST"}:
             latencies.append(r["latency_ms"])
 
     if not quiet:
@@ -126,13 +143,13 @@ def run_load_test(host, port, users, timeout, csv_path=None, quiet=False):
             print(f"  - Mean:   {statistics.mean(latencies):.2f} ms")
             print(f"  - Median: {statistics.median(latencies):.2f} ms")
             if len(latencies) >= 20:
-                p95 = sorted(latencies)[int(len(latencies) * 0.95)]
+                p95 = sorted(latencies)[math.ceil(len(latencies) * 0.95) - 1]
                 print(f"  - 95th %%: {p95:.2f} ms")
         print("=" * 50 + "\n")
 
     if csv_path:
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=["user_id", "status", "latency_ms", "timestamp"])
+            writer = csv.DictWriter(f, fieldnames=["user_id", "status", "latency_ms", "timestamp", "started_at"])
             writer.writeheader()
             writer.writerows(results)
         if not quiet:
@@ -157,7 +174,15 @@ if __name__ == "__main__":
         csv_path=args.csv_path,
         quiet=args.quiet,
     )
-    if summary["counts"].get("FAIL", 0) > 0:
+    valid = {"BOOKED", "SOLD_OUT", "BUSY", "BAD_REQUEST"}
+    if any(status not in valid for status in summary["counts"]):
+        sys.exit(1)
+    for option, status in ((args.expect_booked, "BOOKED"), (args.expect_sold_out, "SOLD_OUT")):
+        if option is not None and summary["counts"].get(status, 0) != option:
+            print(f"Expected {option} {status}, got {summary['counts'].get(status, 0)}", file=sys.stderr)
+            sys.exit(1)
+    if args.expect_busy_min is not None and summary["counts"].get("BUSY", 0) < args.expect_busy_min:
+        print("Expected more ERR BUSY responses", file=sys.stderr)
         sys.exit(1)
     sys.exit(0)
 

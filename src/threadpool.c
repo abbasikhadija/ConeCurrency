@@ -12,6 +12,7 @@
  */
 #include "threadpool.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdlib.h>
@@ -58,7 +59,13 @@ struct thread_pool *pool_start(int n, struct client_queue *queue,
     sigemptyset(&block);
     sigaddset(&block, SIGINT);
     sigaddset(&block, SIGTERM);
-    pthread_sigmask(SIG_BLOCK, &block, &previous);
+    int mask_error = pthread_sigmask(SIG_BLOCK, &block, &previous);
+    if (mask_error != 0) {
+        free(pool->threads);
+        free(pool);
+        errno = mask_error;
+        return NULL;
+    }
 
     int error = 0;
     while (pool->count < n) {
@@ -67,7 +74,8 @@ struct thread_pool *pool_start(int n, struct client_queue *queue,
         pool->count++;
     }
 
-    pthread_sigmask(SIG_SETMASK, &previous, NULL);
+    mask_error = pthread_sigmask(SIG_SETMASK, &previous, NULL);
+    if (error == 0) error = mask_error;
 
     if (error != 0) {
         /* Partial failure: send the workers we did hire home, then report. */
@@ -75,6 +83,7 @@ struct thread_pool *pool_start(int n, struct client_queue *queue,
         for (int i = 0; i < pool->count; i++) pthread_join(pool->threads[i], NULL);
         free(pool->threads);
         free(pool);
+        errno = error;
         return NULL;
     }
     return pool;
