@@ -1,4 +1,12 @@
 # ConeCurrency Gelateria 🍦
+
+**Current classroom setup:** see [CLASSROOM.md](CLASSROOM.md) for student joining,
+admin login, managed C rounds, production hosting and real-backend tests. Admin
+controls require ADMIN_PASSWORD; there is no default production password.
+The protocol table below describes the mock's extensions. The unchanged C
+server supports BOOK only; managed resets restart that real executable, and
+/api/status reports bridge-observed metrics. Failed external RESET replies do
+not clear the dashboard. Browser connections now use same-origin /ws.
 ### Modern Visual Dashboard for a Concurrent POSIX Ticket-Booking Engine
 **Course:** CSC-251L Operating Systems (Person 1: Concurrency & Synchronization Dashboard)
 
@@ -88,7 +96,7 @@ BACKEND_HOST=127.0.0.1 BACKEND_PORT=8080 npm run dev:bridge
 
 ---
 
-## 🧪 Testing Suite (100% Passing)
+## 🧪 Testing Suite
 
 ### Run Unit and Integration Tests (Vitest + Coverage)
 ```bash

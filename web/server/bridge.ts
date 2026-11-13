@@ -74,6 +74,10 @@ export class BridgeServer {
     this.backendPort = options.backendPort ?? PROTOCOL_CONFIG.DEFAULT_BACKEND_PORT;
     this.bridgePort = options.bridgePort ?? PROTOCOL_CONFIG.DEFAULT_BRIDGE_PORT;
 
+    for (const port of [this.backendPort, this.bridgePort]) {
+      if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Ports must be 1..65535');
+    }
+    if (options.initialStock !== undefined && (!Number.isInteger(options.initialStock) || options.initialStock < 0)) throw new Error('Invalid initial stock');
     this.app = express();
     this.app.set('trust proxy', 'loopback');
     this.initialStock = options.initialStock;

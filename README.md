@@ -1,5 +1,9 @@
 # ConeCurrency 🍦
 
+The classroom student/admin web workflows and compatibility fixes are documented
+in [web/CLASSROOM.md](web/CLASSROOM.md). The original dashboard remains available
+after admin sign-in; the bridge can manage the real C server in either mode.
+
 ConeCurrency compares sequential and concurrent ice cream ordering using C,
 Linux TCP sockets and POSIX threads. One BOOK reserves one cone from shared
 inventory. Both modes reuse the same handler and mutex-protected booking engine.
