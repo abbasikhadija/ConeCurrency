@@ -108,7 +108,7 @@ export const App: React.FC = () => {
 
   const handleResetCounters = () => {
     wsResetCounters();
-    addToast('info', 'Requesting backend reset…');
+    addToast('info', 'Requesting backend reset...');
   };
 
   const handleOrderOne = () => {

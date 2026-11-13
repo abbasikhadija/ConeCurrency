@@ -15,7 +15,7 @@ inventory. Both modes reuse the same handler and mutex-protected booking engine.
 | P1 — AQ / Abdul Qudoos | Booking mutex, inventory, statistics, load tester, race proof, demo script |
 | P2 — Khadija | Networking, request handler, sequential loop, CLI, benchmarks, shared setup |
 | P3 — Sadia-Fatima | Bounded queue, worker pool, concurrent accept loop and shutdown |
-| GUI — Abdul Qudoos | No GUI/bridge files are present in this checkout |
+| GUI — Abdul Qudoos | Original Python interfaces and React gelateria retained; classroom bridge adds student/admin workflows |
 
 `make all` now builds one production binary supporting both server modes using
 all three owners' real modules. The P1 test substitute is retained only for P2's
@@ -50,8 +50,8 @@ and tests automatically. Run inside Ubuntu (native, VM or WSL Ubuntu), rather
 than Windows PowerShell. No database, migration, API key, secrets, `.env` file,
 or environment variable is required. Inventory is in memory and resets to
 `--tickets` each time the server starts. It binds to **127.0.0.1** for local
-clients. A browser GUI would need its teammate's TCP bridge; no HTTP bridge is
-included in this checkout.
+clients. The web classroom uses the Node HTTP/WebSocket bridge in web/; see
+web/CLASSROOM.md for its environment and admin setup.
 
 ## Start and place an order
 

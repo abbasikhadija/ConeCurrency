@@ -1,5 +1,9 @@
 # Integrated Ubuntu backend
 
+Update 13 November: the React bridge and classroom student/admin workflows are
+now included. See [web classroom setup](../web/CLASSROOM.md). The report below
+describes the earlier backend integration; the C architecture is unchanged.
+
 ## Architecture and preserved ownership
 
 A TCP client sends BOOK LF to 127.0.0.1. P2 creates the listener, parses CLI

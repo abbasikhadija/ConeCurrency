@@ -1,5 +1,10 @@
 # Integration verification on 4 November 2026
 
+Update 13 November: the web classroom now has its own CI workflow, covering
+student/admin access, managed C rounds and browser tests in both real C modes.
+See [classroom documentation](../web/CLASSROOM.md). The historical report below
+records the original backend verification.
+
 ## Checkout and scope
 
 Started from the clean Desktop checkout at a65a707 (merged main). Repairs are
