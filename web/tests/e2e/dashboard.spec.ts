@@ -57,7 +57,12 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
 
     // Click Reset Counters
     await page.getByTestId('btn-reset-counters').click();
-    await expect(page.getByTestId('stat-booked')).toHaveText('0');
+    if (process.env.PLAYWRIGHT_REAL_BACKEND === '1') {
+      await expect(page.getByRole('alert').filter({hasText:'Backend rejected reset'})).toBeVisible();
+      await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
+    } else {
+      await expect(page.getByTestId('stat-booked')).toHaveText('0');
+    }
 
     // Click Clear Tape
     await page.getByTestId('btn-clear-tape').click();

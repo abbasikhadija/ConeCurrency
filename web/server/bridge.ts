@@ -141,8 +141,7 @@ export class BridgeServer {
 
     // Status query endpoint
     this.app.get('/api/status', async (_req: Request, res: Response) => {
-      const entry = await this.sendSingleTcpRequest('STATUS');
-      res.status(entry.status === 'STATUS' ? 200 : 501).json({ success: entry.status === 'STATUS', entry, stats: this.stats, scope: 'bridge-observed orders' });
+      res.json({ success: true, stats: this.getStats(), scope: 'bridge-observed orders', backendConnected: this.backendConnected });
     });
 
     // Malformed request test endpoint
@@ -156,7 +155,13 @@ export class BridgeServer {
 
   public async requestReset() {
     if (this.inFlight) return { success: false, error: 'Wait for pending orders before resetting' };
-    if (await this.classroom.restartManaged()) return {success:true,stats:this.stats};
+    try {
+      if (await this.classroom.restartManaged()) return {success:true,stats:this.stats};
+    } catch (error) {
+      const message = (error as Error).message;
+      this.broadcast({type:'ACTION_ERROR',message});
+      return {success:false,error:message,stats:this.stats};
+    }
     const entry = await this.sendSingleTcpRequest('RESET');
     const success = entry.rawResponse === 'OK RESET';
     if (success) { this.resetStats(); this.broadcast({type:'RESET_STATE',stats:this.stats}); }
@@ -352,7 +357,7 @@ export class BridgeServer {
   public start(): Promise<void> {
     return new Promise((resolve, reject) => {
       this.httpServer = http.createServer(this.app);
-      this.wss = new WebSocketServer({ server: this.httpServer });
+      this.wss = new WebSocketServer({ server: this.httpServer, maxPayload: 65536 });
 
       this.httpServer.once('error', reject);
       this.wss.on('connection', (ws: WebSocket, request) => {

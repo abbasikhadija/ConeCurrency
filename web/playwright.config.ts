@@ -13,7 +13,9 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm run dev:mock',
+      command: process.env.PLAYWRIGHT_REAL_BACKEND === '1'
+        ? `../ticket-server --mode ${process.env.TEST_C_MODE || 'concurrent'} --tickets 1000 --workers 4 --queue 64 --delay-ms 0`
+        : 'npm run dev:mock',
       port: 8080,
       reuseExistingServer: !process.env.CI,
     },

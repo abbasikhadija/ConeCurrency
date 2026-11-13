@@ -131,7 +131,7 @@ export class Classroom {
   }
   async stop() {
     const child=this.child;this.child=undefined;
-    if(!child || child.exitCode!==null)return;
+    if(!child || !child.pid || child.exitCode!==null)return;
     await new Promise<void>(resolve=>{const timer=setTimeout(()=>{child.kill('SIGKILL');},3000);
       child.once('exit',()=>{clearTimeout(timer);resolve();});child.kill('SIGINT');});
   }

@@ -22,3 +22,9 @@ jobs:
         working-directory: web
       - run: npm run test:e2e
         working-directory: web
+      - name: Browser to real C sequential server
+        run: PLAYWRIGHT_REAL_BACKEND=1 TEST_C_MODE=sequential npm run test:e2e
+        working-directory: web
+      - name: Browser to real C concurrent server
+        run: PLAYWRIGHT_REAL_BACKEND=1 TEST_C_MODE=concurrent npm run test:e2e
+        working-directory: web

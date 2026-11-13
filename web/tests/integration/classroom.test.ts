@@ -41,7 +41,8 @@ describe('Classroom security and original C wire protocol',()=>{
     const reset=await admin.post('/api/reset').send({});
     expect(reset.status).toBe(409);expect(reset.body.success).toBe(false);
     expect(bridge.getStats().booked).toBe(3);expect(stock).toBe(0);
-    expect((await admin.get('/api/status')).status).toBe(501);
+    const status=await admin.get('/api/status');
+    expect(status.status).toBe(200);expect(status.body.scope).toBe('bridge-observed orders');
     expect(bridge.getStats().bad).toBe(0);
     expect((await admin.post('/api/burst').send({count:1000})).status).toBe(400);
     expect((await admin.post('/api/burst').send({count:'invalid'})).status).toBe(400);
