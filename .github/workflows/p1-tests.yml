@@ -24,7 +24,7 @@ jobs:
       - name: Build production concurrent server with real P1 modules
         run: make concurrent
 
-      - name: Race condition verification (Safe Mode: Mutex Protected)
+      - name: 'Race condition verification (Safe Mode: Mutex Protected)'
         run: |
           python3 tests/test_race.py
 

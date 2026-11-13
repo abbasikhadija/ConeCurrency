@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
   test.beforeEach(async ({ page }) => {
+    await page.request.post('/api/login', {data:{password:'classroom-test-only'}});
     await page.goto('/');
+    await expect(page.getByText('Backend Connected', {exact:true})).toBeVisible();
     // Wait for header and connection status
     await expect(page.locator('.brand-title')).toContainText('ConeCurrency Gelateria');
   });
@@ -51,11 +53,17 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
   test('resets counters and clears register tape cleanly', async ({ page }) => {
     // Order a cone first
     await page.getByTestId('btn-book').click();
+    await expect(page.getByTestId('tape-stream')).toContainText('BOOK');
     await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
 
     // Click Reset Counters
     await page.getByTestId('btn-reset-counters').click();
-    await expect(page.getByTestId('stat-booked')).toHaveText('0');
+    if (process.env.PLAYWRIGHT_REAL_BACKEND === '1') {
+      await expect(page.getByRole('region', {name:'Notifications'}).getByText(/Backend rejected reset/)).toBeVisible();
+      await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
+    } else {
+      await expect(page.getByTestId('stat-booked')).toHaveText('0');
+    }
 
     // Click Clear Tape
     await page.getByTestId('btn-clear-tape').click();
@@ -64,6 +72,9 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
 
   test('keyboard shortcut B orders cone and C clears tape', async ({ page }) => {
     await page.keyboard.press('B');
+    // Counters include earlier sessions; wait for this request's own reply
+    // before clearing, otherwise its later response legitimately refills tape.
+    await expect(page.getByTestId('tape-stream')).toContainText('BOOK');
     await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
 
     await page.keyboard.press('C');

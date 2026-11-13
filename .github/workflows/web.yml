@@ -1,0 +1,30 @@
+name: Web and classroom integration
+on: [push, pull_request]
+jobs:
+  web:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: make all
+      - run: npm ci
+        working-directory: web
+      - run: npm run lint && npm run build
+        working-directory: web
+      - run: REAL_C_SERVER="$GITHUB_WORKSPACE/ticket-server" npm test
+        working-directory: web
+      - run: npx playwright install --with-deps chromium
+        working-directory: web
+      - run: npm run test:e2e
+        working-directory: web
+      - name: Browser to real C sequential server
+        run: PLAYWRIGHT_REAL_BACKEND=1 TEST_C_MODE=sequential npm run test:e2e
+        working-directory: web
+      - name: Browser to real C concurrent server
+        run: PLAYWRIGHT_REAL_BACKEND=1 TEST_C_MODE=concurrent npm run test:e2e
+        working-directory: web

@@ -401,7 +401,7 @@ Two places keep numbers:
 | CI | Unit tests repeated 20 times | Pass every time |
 | CI | ThreadSanitizer, AddressSanitizer, UBSan on queue and pool | No reports |
 
-> `test_concurrent.py` uses P1's labelled **test stub**, which has no mutex. It tests the concurrency engine, not booking correctness. The "no overselling" proof needs P1's real `booking.c`.
+> `test_concurrent.py` now uses P1's real booking and statistics modules. The original queue/pool tests are retained, and `make test-race` checks the inventory invariant across repeated runs.
 
 ### Seeing it in Linux
 ```bash
@@ -444,7 +444,7 @@ Every server event can become one animation in the UI.
 | Worker waiting | Condition variable | Busy loop | 0% CPU while idle |
 | Wait check | `while` loop | `if` | Safe against spurious wakeups and stolen items |
 | Locks | One lock per shared structure, never two held at once | Nested locks | Deadlock impossible by design |
-| Shutdown | Drain the queue | Drop queued users | Nobody who was accepted is silently abandoned |
+| Shutdown | Drain the queue | Drop queued users | Every queued descriptor is reclaimed; shutdown may interrupt its reply |
 | Waiting for connections | `poll()` with 500 ms timeout | Plain blocking `accept()` | Can notice Ctrl+C even when no users arrive |
 | Signal delivery | Block in workers, unblock in main | Let any thread receive it | Predictable: only main handles shutdown |
 | Signal handler | Only sets a flag | Do cleanup inside handler | Most functions are unsafe inside handlers |
@@ -466,16 +466,16 @@ gcc $CFLAGS -O2 src/queue.c src/threadpool.c tests/test_threadpool.c -o build/te
 # Data race detection
 gcc $CFLAGS -fsanitize=thread src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool-tsan -pthread && ./build/test-threadpool-tsan
 
-# Full server in concurrent mode (labelled P1 test stub) + integration tests
+# Full server in concurrent mode (real P1 booking/statistics) + integration tests
 gcc $CFLAGS -O2 -DWITH_CONCURRENT src/main.c src/options.c src/network.c src/handler.c src/sequential.c \
-    tests/p1_stub.c src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
+    src/booking.c src/stats.c src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
 python3 -m unittest tests.test_concurrent -v
 ```
-The same steps run automatically on every push in `.github/workflows/p3-tests.yml`. Once P1's modules exist, `make concurrent` builds the production server.
+The same steps run automatically on every push in `.github/workflows/p3-tests.yml`. `make all` and `make concurrent` build the integrated production server.
 
 ### Known limitations
-- Booking correctness under concurrency cannot be shown until P1's real `booking.c` replaces the stub.
-- `server_stop` is declared in shared code as `volatile sig_atomic_t`. ThreadSanitizer reports its cross-thread reads as a data race when the full server is built with `-fsanitize=thread`; a C11 `atomic_int` would remove the report. This is a shared-header decision for the team.
+- Booking correctness is now checked using the real P1 engine, including repeated one-ticket contention tests.
+- Integration replaced the shared `volatile sig_atomic_t` stop flag with a lock-free C11 `atomic_int`; workers and the signal handler now synchronize accesses. The handler still only sets the flag.
 - During shutdown, clients still waiting in the queue have their connection closed without a reply.
 - Under ThreadSanitizer, `/proc/PID/task` shows one extra (sanitizer) thread.
 

@@ -4,7 +4,9 @@
 #include <time.h>
 
 static int remaining;
+#ifndef UNSAFE_MODE
 static pthread_mutex_t inventory_lock = PTHREAD_MUTEX_INITIALIZER;
+#endif
 
 void booking_init(int n)
 {

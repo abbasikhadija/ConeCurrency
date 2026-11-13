@@ -13,12 +13,15 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: 'npm run dev:mock',
+      command: process.env.PLAYWRIGHT_REAL_BACKEND === '1'
+        ? `../ticket-server --mode ${process.env.TEST_C_MODE || 'concurrent'} --tickets 1000 --workers 4 --queue 64 --delay-ms 0`
+        : 'npm run dev:mock',
       port: 8080,
       reuseExistingServer: !process.env.CI,
     },
     {
       command: 'npm run dev:bridge',
+      env: { ADMIN_PASSWORD: 'classroom-test-only' },
       port: 3001,
       reuseExistingServer: !process.env.CI,
     },
@@ -31,7 +34,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) },
     },
   ],
 });

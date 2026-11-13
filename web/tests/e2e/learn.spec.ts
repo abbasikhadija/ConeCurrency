@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test.describe('ConeCurrency Gelateria - How it Works (Learn Section) E2E', () => {
   test.beforeEach(async ({ page }) => {
+    await page.request.post('/api/login', {data:{password:'classroom-test-only'}});
     await page.goto('/');
+    await expect(page.getByText('Backend Connected', {exact:true})).toBeVisible();
     // Switch to Learn section
     await page.getByText('How it Works').click();
   });

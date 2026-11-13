@@ -90,6 +90,8 @@ export const App: React.FC = () => {
     resetCounters: wsResetCounters,
     clearTape,
   } = useWebSocket({
+    onReset: () => {setScoops([]); scoopCounterRef.current = 0; addToast('success', 'Backend confirmed reset');},
+    onError: message => addToast('error', message),
     onTapeEntry: handleTapeEntry,
     onBackendStatusChange: handleBackendStatusChange,
   });
@@ -106,10 +108,7 @@ export const App: React.FC = () => {
 
   const handleResetCounters = () => {
     wsResetCounters();
-    setScoops([]);
-    scoopCounterRef.current = 0;
-    soundEngine.playChime();
-    addToast('info', 'Counters and inventory reset to initial state');
+    addToast('info', 'Requesting backend reset...');
   };
 
   const handleOrderOne = () => {

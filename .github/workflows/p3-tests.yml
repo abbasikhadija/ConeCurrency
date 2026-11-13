@@ -38,9 +38,9 @@ jobs:
           gcc $CFLAGS -fsanitize=address,undefined src/queue.c src/threadpool.c tests/test_threadpool.c -o build/test-threadpool-asan -pthread
           ./build/test-threadpool-asan
 
-      - name: Concurrent server integration tests (with labelled P1 test stub)
+      - name: Concurrent server integration tests (real P1 inventory)
         run: |
           gcc $CFLAGS -O2 -DWITH_CONCURRENT src/main.c src/options.c src/network.c \
-              src/handler.c src/sequential.c tests/p1_stub.c \
+              src/handler.c src/sequential.c src/booking.c src/stats.c \
               src/queue.c src/threadpool.c src/concurrent.c -o build/p3-test-server -pthread
           python3 -m unittest tests.test_concurrent -v

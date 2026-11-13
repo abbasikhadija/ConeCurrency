@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-volatile sig_atomic_t server_stop;
+atomic_int server_stop;
 static void stop_server(int signal_number) { (void)signal_number; server_stop = 1; }
 
 int main(int argc, char **argv)

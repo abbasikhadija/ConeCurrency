@@ -34,7 +34,7 @@ export function reduceStats(
   switch (entry.status) {
     case 'OK': {
       next.booked++;
-      if (entry.ticketId) {
+      if (entry.ticketId && entry.ticketId !== 'BOOKED' && entry.ticketId !== 'RESET') {
         if (next.seenTicketIds.includes(entry.ticketId)) {
           // DUPLICATE TICKET ID -> RACE CONDITION!
           next.raceConditionDetected = true;

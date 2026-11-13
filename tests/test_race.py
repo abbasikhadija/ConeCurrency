@@ -8,6 +8,8 @@ Proves that:
 """
 
 import os
+import re
+import selectors
 from pathlib import Path
 import signal
 import socket
@@ -64,10 +66,17 @@ def run_race_iteration(server_path, tickets=1, users=20, workers=8, delay_ms=10)
     )
 
     # Wait for server banner
-    ready_line = proc.stdout.readline()
+    with selectors.DefaultSelector() as selector:
+        selector.register(proc.stdout, selectors.EVENT_READ)
+        if not selector.select(5):
+            proc.kill()
+            proc.communicate()
+            raise RuntimeError("Server readiness timed out")
+        ready_line = proc.stdout.readline()
     if "ConeCurrency" not in ready_line:
         proc.kill()
-        raise RuntimeError(f"Server failed to start properly: {ready_line}")
+        _, error = proc.communicate()
+        raise RuntimeError(f"Server failed to start properly: {ready_line} {error}")
 
     barrier = threading.Barrier(users)
     responses = [None] * users
@@ -84,6 +93,11 @@ def run_race_iteration(server_path, tickets=1, users=20, workers=8, delay_ms=10)
     # Clean shutdown via SIGINT
     proc.send_signal(signal.SIGINT)
     stdout, stderr = proc.communicate(timeout=5)
+    if proc.returncode != 0 or stderr.strip():
+        raise RuntimeError(f"Server exited {proc.returncode}: {stderr}")
+    remaining = re.search(r"remaining=(-?\d+)", stdout)
+    if remaining is None:
+        raise RuntimeError(f"Server did not print final inventory: {stdout}")
 
     booked_count = sum(1 for r in responses if r == "OK BOOKED")
     sold_out_count = sum(1 for r in responses if r == "ERR SOLD_OUT")
@@ -95,6 +109,7 @@ def run_race_iteration(server_path, tickets=1, users=20, workers=8, delay_ms=10)
         "busy": busy_count,
         "stdout": stdout,
         "responses": responses,
+        "remaining": int(remaining.group(1)),
     }
 
 
@@ -129,6 +144,8 @@ class TestRaceConditionProof(unittest.TestCase):
                 users - tickets,
                 f"Iteration {i+1}: Expected {users - tickets} sold out, got {result['sold_out']}",
             )
+            self.assertEqual(result["booked"] + result["remaining"], tickets)
+            self.assertGreaterEqual(result["remaining"], 0)
 
         print(f"[+] SUCCESS: Safe server passed all {iterations} iterations with zero double-bookings!")
 
@@ -146,6 +163,8 @@ def main():
             print("Running 1 ticket vs 20 concurrent users over 5 runs...")
             for i in range(5):
                 res = run_race_iteration(DEFAULT_SAFE_SERVER, tickets=1, users=20)
+                if res["booked"] != 1 or res["sold_out"] != 19 or res["remaining"] != 0:
+                    raise RuntimeError(f"Safe demo invariant failed: {res}")
                 print(f"  Run {i+1}: Booked = {res['booked']} / 1, Sold Out = {res['sold_out']} / 19 -> PASS")
         else:
             print(f"Safe server {DEFAULT_SAFE_SERVER} not found. Build with 'make concurrent' first.")
