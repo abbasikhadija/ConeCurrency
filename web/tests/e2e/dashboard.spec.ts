@@ -53,6 +53,7 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
   test('resets counters and clears register tape cleanly', async ({ page }) => {
     // Order a cone first
     await page.getByTestId('btn-book').click();
+    await expect(page.getByTestId('tape-stream')).toContainText('BOOK');
     await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
 
     // Click Reset Counters
@@ -71,6 +72,9 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
 
   test('keyboard shortcut B orders cone and C clears tape', async ({ page }) => {
     await page.keyboard.press('B');
+    // Counters include earlier sessions; wait for this request's own reply
+    // before clearing, otherwise its later response legitimately refills tape.
+    await expect(page.getByTestId('tape-stream')).toContainText('BOOK');
     await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
 
     await page.keyboard.press('C');
