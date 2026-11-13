@@ -68,6 +68,7 @@ export class BridgeServer {
   private classroom: Classroom;
   private inFlight = 0;
   private initialStock?: number;
+  private socketSessions = new WeakMap<WebSocket, http.IncomingMessage>();
 
   constructor(options: BridgeOptions = {}) {
     this.backendHost = options.backendHost ?? PROTOCOL_CONFIG.DEFAULT_BACKEND_HOST;
@@ -352,7 +353,8 @@ export class BridgeServer {
     if (!this.wss) return;
     const data = JSON.stringify(message);
     this.wss.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
+      const session = this.socketSessions.get(client);
+      if (client.readyState === WebSocket.OPEN && session && this.classroom.isAdmin(session)) {
         client.send(data);
       }
     });
@@ -365,6 +367,11 @@ export class BridgeServer {
 
       this.httpServer.once('error', reject);
       this.wss.on('connection', (ws: WebSocket, request) => {
+        const origin = request.headers.origin;
+        if (!this.classroom.isAdmin(request) || (origin && ![
+          `http://${request.headers.host}`, `https://${request.headers.host}`
+        ].includes(origin))) { ws.close(1008, 'Admin session required'); return; }
+        this.socketSessions.set(ws, request);
         // Send initial state upon connection
         ws.send(
           JSON.stringify({
