@@ -7,13 +7,13 @@
 
 export const PROTOCOL_CONFIG = {
   // Default TCP Backend Coordinates
-  DEFAULT_BACKEND_HOST: process.env.BACKEND_HOST || '127.0.0.1',
-  DEFAULT_BACKEND_PORT: parseInt(process.env.BACKEND_PORT || '8080', 10),
+  DEFAULT_BACKEND_HOST: '127.0.0.1',
+  DEFAULT_BACKEND_PORT: 8080,
 
   // Default Bridge WebSocket & HTTP Coordinates
-  DEFAULT_BRIDGE_PORT: parseInt(process.env.BRIDGE_PORT || '3001', 10),
-  DEFAULT_BRIDGE_WS_URL: 'ws://127.0.0.1:3001',
-  DEFAULT_BRIDGE_HTTP_URL: 'http://127.0.0.1:3001',
+  DEFAULT_BRIDGE_PORT: 3001,
+  DEFAULT_BRIDGE_WS_URL: typeof window === 'undefined' ? 'ws://127.0.0.1:3001/ws' : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`,
+  DEFAULT_BRIDGE_HTTP_URL: typeof window === 'undefined' ? 'http://127.0.0.1:3001' : window.location.origin,
 
   // Request Commands (all newline-terminated)
   REQUESTS: {
@@ -105,7 +105,7 @@ export function parseProtocolResponse(rawResponse: string): ParsedProtocolRespon
   // OK response: "OK <ticket_id>" or "OK BOOKED"
   if (trimmed.startsWith('OK')) {
     const parts = trimmed.split(/\s+/, 2);
-    const ticketId = parts[1] || 'BOOKED';
+    const ticketId = parts[1] && !['BOOKED', 'RESET'].includes(parts[1]) ? parts[1] : undefined;
     return {
       raw: rawResponse,
       status: 'OK',

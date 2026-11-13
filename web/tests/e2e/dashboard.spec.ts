@@ -2,7 +2,9 @@ import { test, expect } from '@playwright/test';
 
 test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
   test.beforeEach(async ({ page }) => {
+    await page.request.post('/api/login', {data:{password:'classroom-test-only'}});
     await page.goto('/');
+    await expect(page.getByText('Backend Connected', {exact:true})).toBeVisible();
     // Wait for header and connection status
     await expect(page.locator('.brand-title')).toContainText('ConeCurrency Gelateria');
   });

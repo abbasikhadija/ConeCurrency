@@ -19,6 +19,7 @@ export default defineConfig({
     },
     {
       command: 'npm run dev:bridge',
+      env: { ADMIN_PASSWORD: 'classroom-test-only' },
       port: 3001,
       reuseExistingServer: !process.env.CI,
     },
@@ -31,7 +32,7 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { ...devices['Desktop Chrome'], ...(process.env.PLAYWRIGHT_CHANNEL ? { channel: process.env.PLAYWRIGHT_CHANNEL } : {}) },
     },
   ],
 });

@@ -6,6 +6,8 @@ import { INITIAL_STATS } from '../utils/formatters.js';
 interface UseWebSocketOptions {
   url?: string;
   onTapeEntry?: (entry: TapeEntry) => void;
+  onReset?: () => void;
+  onError?: (message: string) => void;
   onBackendStatusChange?: (connected: boolean) => void;
 }
 
@@ -13,6 +15,8 @@ export function useWebSocket({
   url = PROTOCOL_CONFIG.DEFAULT_BRIDGE_WS_URL,
   onTapeEntry,
   onBackendStatusChange,
+  onReset,
+  onError,
 }: UseWebSocketOptions = {}) {
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('reconnecting');
   const [backendConnected, setBackendConnected] = useState<boolean>(false);
@@ -22,6 +26,8 @@ export function useWebSocket({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectAttemptRef = useRef<number>(0);
   const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const onResetRef = useRef(onReset); onResetRef.current = onReset;
+  const onErrorRef = useRef(onError); onErrorRef.current = onError;
   const onTapeEntryRef = useRef(onTapeEntry);
   const onBackendStatusChangeRef = useRef(onBackendStatusChange);
 
@@ -42,7 +48,7 @@ export function useWebSocket({
       ws.onopen = () => {
         reconnectAttemptRef.current = 0;
         // WebSocket bridge is open, status depends on backend connection
-        setConnectionStatus(backendConnected ? 'connected' : 'unreachable');
+        setConnectionStatus('reconnecting');
       };
 
       ws.onmessage = (event) => {
@@ -67,7 +73,10 @@ export function useWebSocket({
             });
             if (data.stats) setStats(data.stats);
             onTapeEntryRef.current?.(entry);
+          } else if (data.type === 'ACTION_ERROR') {
+            onErrorRef.current?.(data.message);
           } else if (data.type === 'RESET_STATE') {
+            onResetRef.current?.();
             if (data.stats) setStats(data.stats);
           }
         } catch (e) {
@@ -87,7 +96,7 @@ export function useWebSocket({
     } catch (e) {
       scheduleReconnect();
     }
-  }, [url, backendConnected]);
+  }, [url]);
 
   const scheduleReconnect = useCallback(() => {
     if (reconnectTimerRef.current) return;
@@ -108,6 +117,7 @@ export function useWebSocket({
         clearTimeout(reconnectTimerRef.current);
       }
       if (wsRef.current) {
+        wsRef.current.onclose = null;
         wsRef.current.close();
       }
     };

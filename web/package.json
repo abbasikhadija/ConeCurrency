@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "start": "tsx server/index.ts",
     "dev": "vite",
     "dev:bridge": "tsx server/index.ts",
     "dev:mock": "tsx mock-server/index.ts",

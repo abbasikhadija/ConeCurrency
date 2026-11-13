@@ -9,7 +9,7 @@ describe('ASCII Protocol Parser & Serializer', () => {
 
     const res2 = parseProtocolResponse('OK BOOKED\n');
     expect(res2.status).toBe('OK');
-    expect(res2.ticketId).toBe('BOOKED');
+    expect(res2.ticketId).toBeUndefined();
   });
 
   it('parses SOLD_OUT responses (both prompt and C spec)', () => {

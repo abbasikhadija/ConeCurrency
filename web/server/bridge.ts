@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express';
 import * as http from 'http';
 import * as net from 'net';
 import { WebSocketServer, WebSocket } from 'ws';
-import cors from 'cors';
+import path from 'node:path';
+import { Classroom } from './classroom.js';
 import {
   PROTOCOL_CONFIG,
   parseProtocolResponse,
@@ -14,6 +15,10 @@ export interface BridgeOptions {
   backendHost?: string;
   backendPort?: number;
   bridgePort?: number;
+  initialStock?: number;
+  adminPassword?: string;
+  manageBackend?: boolean;
+  serverPath?: string;
 }
 
 export interface TapeLogEntry {
@@ -21,7 +26,7 @@ export interface TapeLogEntry {
   timestamp: string;
   command: string;
   rawResponse: string;
-  status: 'OK' | 'SOLD_OUT' | 'BUSY' | 'ERR' | 'MALFORMED' | 'TIMEOUT';
+  status: 'OK' | 'SOLD_OUT' | 'BUSY' | 'ERR' | 'MALFORMED' | 'TIMEOUT' | 'STATUS';
   ticketId?: string;
   reason?: string;
   latencyMs: number;
@@ -60,6 +65,9 @@ export class BridgeServer {
   };
 
   private latencies: number[] = [];
+  private classroom: Classroom;
+  private inFlight = 0;
+  private initialStock?: number;
 
   constructor(options: BridgeOptions = {}) {
     this.backendHost = options.backendHost ?? PROTOCOL_CONFIG.DEFAULT_BACKEND_HOST;
@@ -67,10 +75,14 @@ export class BridgeServer {
     this.bridgePort = options.bridgePort ?? PROTOCOL_CONFIG.DEFAULT_BRIDGE_PORT;
 
     this.app = express();
-    this.app.use(cors());
+    this.app.set('trust proxy', 'loopback');
+    this.initialStock = options.initialStock;
     this.app.use(express.json());
 
+    this.classroom = new Classroom(this.app, this, options);
     this.setupRoutes();
+    this.app.use(express.static(path.resolve('dist')));
+    this.app.get('/', (_req, res) => res.sendFile(path.resolve('dist/index.html')));
   }
 
   public getApp(): express.Application {
@@ -85,7 +97,15 @@ export class BridgeServer {
     return this.backendConnected;
   }
 
+  public get pendingRequests() { return this.inFlight; }
+
   private setupRoutes() {
+    // Mutating dashboard operations and detailed status require an admin session.
+    this.app.use('/api', (req, res, next) => {
+      if (req.method !== 'GET' && this.classroom.isChanging) {res.status(409).json({error:'Round is changing'});return;}
+      if (req.path === '/health' || this.classroom.isAdmin(req)) return next();
+      res.status(401).json({ error: 'Admin login required' });
+    });
     // Health and Backend Status
     this.app.get('/api/health', (_req: Request, res: Response) => {
       res.json({
@@ -107,26 +127,22 @@ export class BridgeServer {
 
     // Parallel Burst endpoint (Rush Hour / Flash Mob)
     this.app.post('/api/burst', async (req: Request, res: Response) => {
-      const count = Math.min(Math.max(parseInt(req.body.count || '10', 10), 1), 50);
+      const count = req.body.count ?? 10;
+      if (!Number.isInteger(count) || count < 1 || count > 50) { res.status(400).json({error:'count must be 1..50'}); return; }
       const results = await this.sendConcurrentTcpRequests('BOOK', count);
       res.json({ count, results, stats: this.stats });
     });
 
     // Reset counters endpoint
     this.app.post('/api/reset', async (_req: Request, res: Response) => {
-      const entry = await this.sendSingleTcpRequest('RESET');
-      this.resetStats();
-      this.broadcast({
-        type: 'RESET_STATE',
-        stats: this.stats,
-      });
-      res.json({ success: true, entry, stats: this.stats });
+      const result = await this.requestReset();
+      res.status(result.success ? 200 : 409).json(result);
     });
 
     // Status query endpoint
     this.app.get('/api/status', async (_req: Request, res: Response) => {
       const entry = await this.sendSingleTcpRequest('STATUS');
-      res.json({ entry, stats: this.stats });
+      res.status(entry.status === 'STATUS' ? 200 : 501).json({ success: entry.status === 'STATUS', entry, stats: this.stats, scope: 'bridge-observed orders' });
     });
 
     // Malformed request test endpoint
@@ -134,6 +150,18 @@ export class BridgeServer {
       const entry = await this.sendSingleTcpRequest('MALFORMED_COMMAND');
       res.json(entry);
     });
+  }
+
+  public setInitialStock(stock: number) { this.initialStock = stock; }
+
+  public async requestReset() {
+    if (this.inFlight) return { success: false, error: 'Wait for pending orders before resetting' };
+    if (await this.classroom.restartManaged()) return {success:true,stats:this.stats};
+    const entry = await this.sendSingleTcpRequest('RESET');
+    const success = entry.rawResponse === 'OK RESET';
+    if (success) { this.resetStats(); this.broadcast({type:'RESET_STATE',stats:this.stats}); }
+    else this.broadcast({type:'ACTION_ERROR', message:'Backend rejected reset. Start a new managed round to restore inventory.'});
+    return {success, entry, stats:this.stats};
   }
 
   public resetStats() {
@@ -154,6 +182,7 @@ export class BridgeServer {
    * Executes a single TCP connection and transaction against the backend.
    */
   public sendSingleTcpRequest(command: string): Promise<TapeLogEntry> {
+    this.inFlight++;
     return new Promise((resolve) => {
       const start = process.hrtime.bigint();
       const id = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -168,6 +197,7 @@ export class BridgeServer {
       const finish = (raw: string, timeout = false) => {
         if (isSettled) return;
         isSettled = true;
+        this.inFlight--;
         client.destroy();
 
         const end = process.hrtime.bigint();
@@ -191,7 +221,7 @@ export class BridgeServer {
           latencyMs,
         };
 
-        this.updateStats(logEntry);
+        if (command === 'BOOK' || command === 'MALFORMED_COMMAND') this.updateStats(logEntry);
         this.broadcast({
           type: 'TAPE_ENTRY',
           entry: logEntry,
@@ -234,6 +264,7 @@ export class BridgeServer {
    * Fires N parallel TCP socket connections concurrently to test backend lock contention.
    */
   public async sendConcurrentTcpRequests(command: string, count: number): Promise<TapeLogEntry[]> {
+    if (!Number.isInteger(count) || count < 1 || count > 50) throw new Error('count must be 1..50');
     const promises: Promise<TapeLogEntry>[] = [];
     for (let i = 0; i < count; i++) {
       promises.push(this.sendSingleTcpRequest(command));
@@ -263,7 +294,7 @@ export class BridgeServer {
     }
 
     // Check consistency: if total booked > initial stock (e.g. 50), flag race condition!
-    if (this.stats.booked > PROTOCOL_CONFIG.DEFAULT_STOCK) {
+    if (this.initialStock !== undefined && this.stats.booked > this.initialStock) {
       this.stats.raceConditionDetected = true;
     }
 
@@ -319,11 +350,12 @@ export class BridgeServer {
   }
 
   public start(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
       this.httpServer = http.createServer(this.app);
       this.wss = new WebSocketServer({ server: this.httpServer });
 
-      this.wss.on('connection', (ws: WebSocket) => {
+      this.httpServer.once('error', reject);
+      this.wss.on('connection', (ws: WebSocket, request) => {
         // Send initial state upon connection
         ws.send(
           JSON.stringify({
@@ -335,18 +367,18 @@ export class BridgeServer {
 
         ws.on('message', async (raw: string) => {
           try {
+            if (!this.classroom.isAdmin(request)) { ws.send(JSON.stringify({type:'ACTION_ERROR',message:'Admin login required'})); return; }
+            if(this.classroom.isChanging) {ws.send(JSON.stringify({type:'ACTION_ERROR',message:'Round is changing'}));return;}
             const data = JSON.parse(raw.toString());
             if (data.type === 'BOOK') {
               await this.sendSingleTcpRequest('BOOK');
             } else if (data.type === 'BURST') {
-              const count = parseInt(data.count || '10', 10);
+              const count = data.count ?? 10;
               await this.sendConcurrentTcpRequests('BOOK', count);
             } else if (data.type === 'BAD_REQUEST') {
               await this.sendSingleTcpRequest('MALFORMED_COMMAND');
             } else if (data.type === 'RESET') {
-              await this.sendSingleTcpRequest('RESET');
-              this.resetStats();
-              this.broadcast({ type: 'RESET_STATE', stats: this.stats });
+              await this.requestReset();
             }
           } catch (e) {
             // ignore bad JSON
@@ -360,20 +392,22 @@ export class BridgeServer {
         this.setBackendConnected(isUp);
       }, 2500);
 
-      this.httpServer.listen(this.bridgePort, () => {
+      this.httpServer.listen(this.bridgePort, '0.0.0.0', () => {
         console.log(`[Bridge Server] Running on http://127.0.0.1:${this.bridgePort} (Relaying to TCP ${this.backendHost}:${this.backendPort})`);
         resolve();
       });
     });
   }
 
-  public stop(): Promise<void> {
+  public async stop(): Promise<void> {
+    await this.classroom.stop();
     return new Promise((resolve) => {
       if (this.healthCheckTimer) {
         clearInterval(this.healthCheckTimer);
         this.healthCheckTimer = null;
       }
       if (this.wss) {
+        this.wss.clients.forEach(client => client.terminate());
         this.wss.close();
       }
       if (this.httpServer) {

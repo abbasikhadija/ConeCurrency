@@ -24,6 +24,7 @@ describe('Bridge Server & Mock TCP Integration', () => {
 
     // 2. Start Bridge Server on fixed port
     bridgeServer = new BridgeServer({
+      adminPassword: 'classroom-test-only',
       backendPort: TEST_BACKEND_PORT,
       bridgePort: TEST_BRIDGE_PORT,
     });
