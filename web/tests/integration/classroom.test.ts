@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import net from 'node:net';
 import request from 'supertest';
 import { BridgeServer } from '../../server/bridge.js';
+import { WebSocket } from 'ws';
 
 describe('Classroom security and original C wire protocol',()=>{
   let backend:net.Server, bridge:BridgeServer, stock=3;
@@ -11,7 +12,7 @@ describe('Classroom security and original C wire protocol',()=>{
       socket.end(data==='BOOK\n'?(stock>0?(stock--,'OK BOOKED\n'):'ERR SOLD_OUT\n'):'ERR BAD_REQUEST\n');
     });});
     await new Promise<void>(resolve=>backend.listen(0,'127.0.0.1',resolve));
-    bridge=new BridgeServer({backendPort:(backend.address() as net.AddressInfo).port,adminPassword:'test-classroom-secret'});
+    bridge=new BridgeServer({bridgePort:3097,backendPort:(backend.address() as net.AddressInfo).port,adminPassword:'test-classroom-secret'});
   });
   afterAll(async()=>{await bridge.stop();await new Promise<void>(resolve=>backend.close(()=>resolve()));});
   it('requires admin authentication for all dashboard mutations and round settings',async()=>{
@@ -46,6 +47,17 @@ describe('Classroom security and original C wire protocol',()=>{
     expect(bridge.getStats().bad).toBe(0);
     expect((await admin.post('/api/burst').send({count:1000})).status).toBe(400);
     expect((await admin.post('/api/burst').send({count:'invalid'})).status).toBe(400);
+  });
+  it('does not stream classroom names or dashboard data to unauthenticated sockets',async()=>{
+    await bridge.start();
+    const messages:string[]=[];
+    const socket=new WebSocket('ws://127.0.0.1:3097/ws');
+    socket.on('message',data=>messages.push(data.toString()));
+    const code=await new Promise<number>((resolve,reject)=>{
+      const timer=setTimeout(()=>{socket.terminate();reject(new Error('Socket not rejected'));},2000);
+      socket.on('close',code=>{clearTimeout(timer);resolve(code);});socket.on('error',reject);
+    });
+    expect(code).toBe(1008);expect(messages).toEqual([]);
   });
 });
 
