@@ -1,6 +1,7 @@
 // Welcome entry choice — Sadia Fatima (P3)
 import React from 'react';
 import ParlourFront from './ParlourFront.js';
+import CustomerGuide from './CustomerGuide.js';
 
 export default function EntryChoice({onCustomer, onAdmin}: {onCustomer: () => void; onAdmin: () => void}) {
   return <div className="student-welcome">
@@ -15,6 +16,7 @@ export default function EntryChoice({onCustomer, onAdmin}: {onCustomer: () => vo
         <span className="entry-icon" aria-hidden="true">🔐</span>
         <span><strong>Team admin</strong><small>Run rounds and watch the server dashboard</small></span>
       </button>
+      <CustomerGuide/>
     </div>
   </div>;
 }

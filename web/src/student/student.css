@@ -268,3 +268,24 @@
 .classroom-panel.student-learn-panel .collapse-btn:hover { background: #d4436f; }
 .classroom-panel.student-learn-panel .student-learn-head button { background: #e75480; }
 .classroom-panel.student-learn-panel .student-learn-head button:hover { background: #d4436f; }
+
+/* ---------- "What's happening here?" guide ---------- */
+.classroom-panel button.customer-guide-open {
+  background: transparent; color: #c2416a; padding: .4rem 0; font-weight: 600; align-self: flex-start;
+}
+.classroom-panel button.customer-guide-open:hover { text-decoration: underline; }
+.customer-guide {
+  background: var(--cc-cream); border-radius: 20px; padding: 1.6rem 1.8rem; max-width: 640px; max-height: 88vh; overflow-y: auto;
+  text-align: left; box-shadow: 0 20px 45px #3e2c2a55; border: 3px solid #f4a6bd; animation: pop-in .3s ease-out; line-height: 1.55;
+}
+.customer-guide-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.customer-guide h2 { margin: 0; color: #e75480; }
+.customer-guide h3 { margin: 1.1rem 0 .3rem; font-size: 1.02rem; }
+.customer-guide ol, .customer-guide ul { padding-left: 1.3rem; margin: .3rem 0; }
+.classroom-panel .customer-guide button.customer-guide-close { background: transparent; color: var(--cc-brown); padding: .3rem .6rem; font-size: 1.1rem; }
+.customer-guide-messages { margin: .3rem 0; display: grid; gap: .4rem; }
+.customer-guide-messages div { display: grid; grid-template-columns: minmax(150px, 40%) 1fr; gap: .6rem; background: #f3e3c9; border-radius: 8px; padding: .45rem .7rem; }
+.customer-guide-messages dt { font-weight: 700; }
+.customer-guide-messages dd { margin: 0; }
+@media (max-width: 560px) { .customer-guide-messages div { grid-template-columns: 1fr; } }
+.classroom-panel .customer-guide button.customer-guide-done { margin-top: 1rem; background: #e75480; font-weight: 600; }

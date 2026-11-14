@@ -5,6 +5,7 @@ import OrderVisual from './OrderVisual.js';
 import Celebration from './Celebration.js';
 import OrderHistory, { servedTimeText } from './OrderHistory.js';
 import ShopFloor from './ShopFloor.js';
+import CustomerGuide from './CustomerGuide.js';
 
 export type StudentOrder = {
   id: string;
@@ -76,6 +77,7 @@ export default function StudentView({student, setStudent, name, setName, sending
       <input id="student-name" required maxLength={40} autoComplete="nickname" placeholder="e.g. Sadia" value={name} onChange={event => setName(event.target.value)}/>
       <p className="student-join-hint">Other customers will see this name in the shop.</p>
       <button disabled={sending}>Enter the parlour</button>
+      <CustomerGuide/>
     </form>
     </div>;
   }
