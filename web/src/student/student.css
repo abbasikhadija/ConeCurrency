@@ -111,3 +111,37 @@
   .parlour-customer:nth-child(3) { left: 36%; } .parlour-customer:nth-child(4) { left: 50%; }
   .parlour-customer:nth-child(5) { left: 64%; }
 }
+
+/* ---------- Entry choice cards ---------- */
+.entry-choice { display: flex; flex-direction: column; gap: .9rem; }
+.classroom-panel button.entry-card {
+  display: flex; align-items: center; gap: 1rem; text-align: left; width: 100%;
+  padding: 1rem 1.2rem; border-radius: 16px; border: 2px solid transparent;
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.classroom-panel button.entry-card:hover { transform: translateY(-2px); box-shadow: 0 8px 18px #3e2c2a22; }
+.classroom-panel button.entry-customer { background: #e75480; }
+.classroom-panel button.entry-admin { background: var(--cc-cream); color: var(--cc-espresso); border-color: var(--cc-beige); }
+.entry-card strong { display: block; font-size: 1.1rem; }
+.entry-card small { display: block; opacity: .85; margin-top: .2rem; }
+.entry-icon { font-size: 2rem; }
+
+/* ---------- Top-bar menu ---------- */
+.student-menu { position: relative; }
+.student-menu-list {
+  position: absolute; right: 0; top: calc(100% + .4rem); z-index: 20; list-style: none; margin: 0; padding: .4rem;
+  min-width: 190px; background: var(--cc-cream); border: 1px solid var(--cc-beige); border-radius: 12px;
+  box-shadow: 0 12px 25px #3e2c2a33;
+}
+.classroom-bar .student-menu-list button {
+  display: block; width: 100%; text-align: left; background: transparent; color: var(--cc-espresso); padding: .65rem .9rem;
+}
+.classroom-bar .student-menu-list button:hover { background: #f4a6bd55; }
+
+/* ---------- About page ---------- */
+.about-vision { line-height: 1.6; background: #fdf0f4; border-left: 4px solid #e75480; padding: 1rem 1.2rem; border-radius: 8px; }
+.about-team { list-style: none; padding: 0; display: grid; gap: .8rem; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.about-team li { background: #f3e3c9; border-radius: 12px; padding: 1rem; }
+.about-team p { margin: .4rem 0 0; font-size: .92rem; line-height: 1.45; }
+.about-role { display: block; color: #e75480; font-size: .85rem; font-weight: 600; }
+.about-copyright { font-size: .85rem; color: #8a6a55; }

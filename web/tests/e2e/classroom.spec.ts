@@ -2,6 +2,7 @@ import {test,expect} from '@playwright/test';
 
 test('student joins, receives a real backend response, and cannot use admin controls',async({page})=>{
   await page.goto('/');
+  await page.getByRole('button',{name:/I'm a customer/}).click();
   await page.getByLabel('Your display name').fill('Classmate One');
   await page.getByRole('button',{name:'Enter the parlour'}).click();
   await expect(page.getByRole('heading',{name:'Hello, Classmate One!'})).toBeVisible();
@@ -12,7 +13,8 @@ test('student joins, receives a real backend response, and cannot use admin cont
 });
 
 test('admin login protects round control and logout revokes access',async({page})=>{
-  await page.goto('/');await page.getByRole('button',{name:'Admin login'}).click();
+  await page.goto('/');await page.getByRole('button',{name:'☰ Menu'}).click();
+  await page.getByRole('menuitem',{name:'Admin login'}).click();
   await page.getByLabel('Admin password').fill('classroom-test-only');
   await page.getByRole('button',{name:'Sign in'}).click();
   await expect(page.getByRole('heading',{name:'Admin — start a new round'})).toBeVisible();
