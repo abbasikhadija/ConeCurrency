@@ -289,3 +289,9 @@
 .customer-guide-messages dd { margin: 0; }
 @media (max-width: 560px) { .customer-guide-messages div { grid-template-columns: 1fr; } }
 .classroom-panel .customer-guide button.customer-guide-done { margin-top: 1rem; background: #e75480; font-weight: 600; }
+
+/* About: names only, plus the OS ideas inside the project */
+.about-team.about-names li { text-align: center; font-size: 1.05rem; }
+.about-inside { list-style: none; padding: 0; display: grid; gap: .7rem; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.about-inside li { background: #fdf0f4; border-left: 4px solid #e75480; border-radius: 10px; padding: .8rem 1rem; }
+.about-inside p { margin: .3rem 0 0; font-size: .92rem; line-height: 1.45; }
