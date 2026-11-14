@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './App.js';
+import './student/student.css';
+import StudentView from './student/StudentView.js';
+import StudentMenu from './student/StudentMenu.js';
+import EntryChoice from './student/EntryChoice.js';
+import AboutUs from './student/AboutUs.js';
+import StudentLearn from './student/StudentLearn.js';
 
 async function api(url: string, body?: object) {
   const response=await fetch('/api/'+url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,
     body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
   const data=await response.json();
-  if(!response.ok)throw new Error(data.error || 'Request failed');
+  if(!response.ok)throw Object.assign(new Error(data.error || 'Request failed'),{status:response.status});
   return data;
 }
 
@@ -18,24 +24,27 @@ export default function ClassroomApp() {
   const [round,setRound]=useState<any>(null);
   const [error,setError]=useState('');
   const [sending,setSending]=useState(false);
+  const [view,setView]=useState<'shop'|'about'|'learn'>('shop');
+  const [entry,setEntry]=useState<'choose'|'customer'>('choose');
   const [config,setConfig]=useState({mode:'concurrent',tickets:50,workers:4,queue:32,delayMs:500});
   useEffect(()=>{void api('session').then(data=>setAdmin(data.admin));void api('student').then(setStudent).catch(()=>{});},[]);
   useEffect(()=>{
     let mounted=true;
-    const refresh=()=>void api(admin?'round':'student').then(data=>{if(mounted){admin?setRound(data):setStudent(data);}}).catch(()=>{});
+    const refresh=()=>void api(admin?'round':'student').then(data=>{if(mounted){admin?setRound(data):setStudent(data);}})
+      .catch(error=>{if(mounted && !admin && error.status===401)setStudent(null);});
     refresh();const timer=setInterval(refresh,700);
     return()=>{mounted=false;clearInterval(timer);};
   },[admin]);
   const act=async(work:()=>Promise<any>)=>{setError('');setSending(true);try{await work();}catch(e){setError((e as Error).message);}finally{setSending(false);}};
-  const result=student?.order?.result;
-  const message=student?.order?.state==='pending'?'Order pending — waiting for the real server response.':
-    result?.status==='OK'?'Your ice cream is ready!':result?.status==='SOLD_OUT'?'This round is sold out.':
-    result?.status==='BUSY'?'The server queue is full. Please try again.':result?'Order could not be confirmed. Ask the team before retrying.':'Ready to order.';
   return <>
     <nav className="classroom-bar" aria-label="Classroom navigation">
       <strong>ConeCurrency Classroom 🍦</strong>
       {admin?<button onClick={()=>void act(async()=>{await api('logout',{});setAdmin(false);})}>Log out</button>:
-        <button onClick={()=>setLogin(!login)}>{login?'Student view':'Admin login'}</button>}
+        <StudentMenu items={[
+          login?{label:'Customer view',onSelect:()=>{setLogin(false);setView('shop');}}:{label:'Admin login',onSelect:()=>{setLogin(true);setView('shop');}},
+          {label:'How it works',onSelect:()=>setView('learn')},
+          {label:'About us',onSelect:()=>setView('about')},
+        ]}/>}
     </nav>
     {error && <p role="alert" className="classroom-error">{error}</p>}
     {admin?<>
@@ -54,24 +63,13 @@ export default function ClassroomApp() {
         <ul>{round?.students?.map((entry:any,index:number)=><li key={index}>{entry.name}: {entry.order?`${entry.order.state} ${entry.order.result?.status||''}`:'joined'}</li>)}</ul>
       </section>
       <Dashboard/>
-    </>:<main className="classroom-panel">
+    </>:view==='about'?<main className="classroom-panel"><AboutUs onBack={()=>setView('shop')}/></main>:
+      view==='learn'?<main className="classroom-panel student-learn-panel"><StudentLearn onBack={()=>setView('shop')}/></main>:<main className="classroom-panel">
       <h1>Welcome to ConeCurrency 🍦</h1>
       {login?<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);});}}>
         <h2>Team admin sign-in</h2><label>Admin password <input type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/></label>
         <button disabled={sending}>Sign in</button>
-      </form>:student?<>
-        <h2>Hello, {student.name}!</h2>
-        <p>Round {student.order?.round??student.round} · {student.managed?student.mode:'Team-operated server'}</p>
-        <div className="student-cone" aria-label={result?.status==='OK'?'Your ice cream':'Ice cream shop'}>{result?.status==='OK'?'🍦':'🏪'}</div>
-        <p role="status">{message}</p>
-        {student.order && <p>Order reference: {student.order.id}</p>}
-        <button disabled={sending || student.order?.state==='pending'} onClick={()=>void act(async()=>{const order=await api('order',{});setStudent({...student,order});})}>Order one ice cream</button>
-        <p>Your order reserves one shared cone. Flavors in the dashboard are decorative.</p>
-      </>:<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('join',{name});setStudent(await api('student'));});}}>
-        <p>Join the class shop and receive your ice cream on this screen.</p>
-        <label>Your display name <input required maxLength={40} autoComplete="nickname" value={name} onChange={event=>setName(event.target.value)}/></label>
-        <button disabled={sending}>Join the shop</button>
-      </form>}
+      </form>:!student&&entry==='choose'?<EntryChoice onCustomer={()=>setEntry('customer')} onAdmin={()=>setLogin(true)}/>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api} onLearn={()=>setView('learn')}/>}
     </main>}
   </>;
 }

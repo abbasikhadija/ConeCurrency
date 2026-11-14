@@ -1,6 +1,6 @@
 # Concurrency Engine — How Our Server Serves Many Users at Once
 
-**Owner:** P3 (Threads & Scheduling)
+**Author:** Sadia Fatima (P3 — Threads & Scheduling)
 **Implementation:** `src/queue.c`, `src/threadpool.c`, `src/concurrent.c`
 **Interfaces (shared, agreed with P2):** `include/queue.h`, `include/threadpool.h`, `include/concurrent.h`
 **Tests:** `tests/test_queue.c`, `tests/test_threadpool.c`, `tests/test_concurrent.py`, `.github/workflows/p3-tests.yml`
@@ -504,3 +504,13 @@ The same steps run automatically on every push in `.github/workflows/p3-tests.ym
 | **Throughput** | How many requests are completed per second. |
 | **Latency** | How long one request takes from start to finish. |
 | **High-water mark** | The highest level ever reached. |
+
+---
+
+## See it in the GUI
+
+The classroom student interface (built by Sadia Fatima, alongside Abdul Qudoos's gelateria
+dashboard) shows this engine live: cashier counters are the worker threads, the waiting line is
+the bounded queue, and "the line is full right now" is `ERR BUSY`. See
+[README — See P3 live](../README.md#see-p3-live-the-classroom-shop-floor) and
+[Student experience](../web/CLASSROOM.md#student-experience).

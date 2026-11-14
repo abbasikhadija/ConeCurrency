@@ -5,10 +5,12 @@ import { spawn, ChildProcess } from 'node:child_process';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import type { BridgeServer, BridgeOptions, TapeLogEntry } from './bridge.js';
+import { buildShopSnapshot, ShopRecentInput } from './shop.js';
 
 type Round = {mode: 'sequential' | 'concurrent'; tickets: number; workers: number; queue: number; delayMs: number};
-type Order = {id: string; round: number; state: 'pending' | 'complete'; result?: TapeLogEntry};
-type Student = {name: string; expires: number; order?: Order};
+type Order = {id: string; round: number; state: 'pending' | 'complete'; result?: TapeLogEntry; sentAt?: number; finishedAt?: number};
+type Student = {name: string; expires: number; order?: Order; history?: Order[]};
+const HISTORY_LIMIT = 20;
 const hash = (value: string) => createHash('sha256').update(value).digest();
 const cookie = (req: IncomingMessage, key: string) => (req.headers.cookie || '').split(';').map(p => p.trim()).find(p => p.startsWith(key + '='))?.slice(key.length + 1);
 
@@ -20,6 +22,7 @@ export class Classroom {
   private child?: ChildProcess;
   private changing = false;
   private round = 0;
+  private recent: ShopRecentInput[] = [];
   private config: Round = {mode:'concurrent',tickets:50,workers:4,queue:32,delayMs:500};
 
   constructor(app: Application, private bridge: BridgeServer, private options: BridgeOptions) {
@@ -54,14 +57,24 @@ export class Classroom {
       const existing = cookie(req,'cc_student');
       const token = existing && this.students.has(existing) ? existing : randomUUID();
       const previous = this.students.get(token);
-      this.students.set(token,{name,expires:Date.now()+8*3600000,order:previous?.order});
+      this.students.set(token,{name,expires:Date.now()+8*3600000,order:previous?.order,history:previous?.history});
       res.cookie('cc_student',token,{httpOnly:true,sameSite:'strict',secure:req.secure,maxAge:8*3600000});
       res.json({name});
+    });
+    app.post('/api/leave', (req,res) => {
+      const token = cookie(req,'cc_student') || '';
+      if (this.students.get(token)?.order?.state === 'pending') {
+        res.status(409).json({error:'Wait for your order to finish before leaving'});return;
+      }
+      this.students.delete(token);
+      res.clearCookie('cc_student');
+      res.json({ok:true});
     });
     app.get('/api/student', (req,res) => {
       const student=this.student(req);
       if (!student) {res.status(401).json({error:'Join the classroom first'});return;}
-      res.json({name:student.name,order:student.order,round:this.round,mode:this.config.mode,managed:!!this.child});
+      res.json({name:student.name,order:student.order,history:student.history??[],round:this.round,mode:this.config.mode,
+        workers:this.config.workers,delayMs:this.config.delayMs,managed:!!this.child});
     });
     app.post('/api/order', (req,res) => {
       const student=this.student(req);
@@ -69,14 +82,25 @@ export class Classroom {
       if (this.changing) {res.status(409).json({error:'The admin is changing rounds'});return;}
       if (student.order?.state === 'pending') {res.status(202).json(student.order);return;}
       if (this.bridge.pendingRequests >= 200) {res.status(429).json({error:'Shop busy, try shortly'});return;}
-      const order: Order={id:randomUUID(),round:this.round,state:'pending'};
+      const order: Order={id:randomUUID(),round:this.round,state:'pending',sentAt:Date.now()};
       student.order=order;
       res.status(202).json(order);
       this.bridge.broadcast({type:'STUDENT_ORDER',name:student.name,order});
       void this.bridge.sendSingleTcpRequest('BOOK').then(result => {
-        order.result=result; order.state='complete';
+        order.result=result; order.state='complete'; order.finishedAt=Date.now();
+        student.history=[order,...(student.history??[])].slice(0,HISTORY_LIMIT);
+        this.recent=[{name:student.name,status:result.status,latencyMs:result.latencyMs,finishedAt:order.finishedAt},...this.recent].slice(0,20);
         this.bridge.broadcast({type:'STUDENT_ORDER',name:student.name,order});
       });
+    });
+    app.get('/api/shop', (req,res) => {
+      const me=this.student(req);
+      if (!me) {res.status(401).json({error:'Join the classroom first'});return;}
+      const pending=[...this.students.values()].filter(s=>s.order?.state==='pending')
+        .map(s=>({name:s.name,isYou:s===me,sentAt:s.order!.sentAt??Date.now()}));
+      res.json(buildShopSnapshot({managed:!!this.child,mode:this.config.mode,workers:this.config.workers,
+        queueCapacity:this.config.queue,delayMs:this.config.delayMs,initialStock:this.config.tickets,
+        booked:this.bridge.getStats().booked,pending,inFlightTotal:this.bridge.pendingRequests,recent:this.recent,now:Date.now()}));
     });
     app.get('/api/round', (req,res) => {
       if (!this.isAdmin(req)) {res.status(401).json({error:'Admin login required'});return;}
@@ -124,7 +148,7 @@ export class Classroom {
         child.stderr?.on('data',data=>{errors=(errors+data).slice(-2000);});
         child.stdout?.on('data',data=>{output=(output+data).slice(-2000);if(output.includes(' on 127.0.0.1:'))finish();});
       });
-      this.config={...config};this.round++;
+      this.config={...config};this.round++;this.recent=[];
       this.bridge.setInitialStock(config.tickets);this.bridge.resetStats();
       this.bridge.broadcast({type:'RESET_STATE',stats:this.bridge.getStats()});
     } catch(error) {await this.stop();throw error;} finally {this.changing=false;}

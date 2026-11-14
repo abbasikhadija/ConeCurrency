@@ -4,7 +4,8 @@ import { DiagramComponent } from './DiagramComponent.js';
 import { ChevronDown, ChevronUp, Play, BookOpen } from 'lucide-react';
 
 interface LearnSectionProps {
-  onTriggerAction: (action: LearnArticle['actionTrigger']) => void;
+  /** Omit for read-only viewers (students): the "try it" buttons are hidden. */
+  onTriggerAction?: (action: LearnArticle['actionTrigger']) => void;
 }
 
 export const LearnSection: React.FC<LearnSectionProps> = ({ onTriggerAction }) => {
@@ -122,7 +123,7 @@ export const LearnSection: React.FC<LearnSectionProps> = ({ onTriggerAction }) =
                   </div>
 
                   {/* Interactive "Try it" Action Button */}
-                  {article.actionTrigger && (
+                  {article.actionTrigger && onTriggerAction && (
                     <div className="article-action-footer">
                       <button
                         className="btn-try-action"
