@@ -35,3 +35,16 @@ describe('StudentView', () => {
     expect(screen.getByRole('button', {name: 'Leave shop'})).toBeDisabled();
   });
 });
+
+describe('Welcome form', () => {
+  it('puts the label above the input and uses the parlour wording', () => {
+    render(<StudentView {...props(null)}/>);
+    const input = screen.getByLabelText('Your display name');
+    const label = screen.getByText('Your display name');
+    expect(label.tagName).toBe('LABEL');
+    expect(label.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('button', {name: 'Enter the parlour'})).toBeInTheDocument();
+    expect(screen.queryByRole('button', {name: 'Join the shop'})).not.toBeInTheDocument();
+    expect(screen.getByText(/Classmates will see this name/)).toBeInTheDocument();
+  });
+});

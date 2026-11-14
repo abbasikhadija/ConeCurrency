@@ -20,3 +20,24 @@
 
 .student-mode { color: var(--cc-brown); font-weight: 500; }
 .student-actions { display: flex; flex-wrap: wrap; align-items: center; }
+
+/* Welcome form: one item per line, label above its input (overrides the
+   inline flex row used by the admin forms). */
+.classroom-panel form.student-join {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .5rem;
+  max-width: 420px;
+}
+.student-join-intro { margin: 0 0 .75rem; line-height: 1.5; }
+.student-join-label { font-weight: 600; }
+.classroom-panel form.student-join input { width: 100%; }
+.student-join-hint { margin: 0; font-size: .85rem; color: #8a6a55; }
+.classroom-panel form.student-join button {
+  margin-top: .5rem;
+  background: #e75480;          /* strawberry pink accent from the parlour theme */
+  font-weight: 600;
+  padding: .85rem 1.6rem;
+}
+.classroom-panel form.student-join button:hover:not(:disabled) { background: #d4436f; }

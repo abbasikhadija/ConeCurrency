@@ -47,10 +47,12 @@ export function orderMessage(order?: StudentOrder): string {
 
 export default function StudentView({student, setStudent, name, setName, sending, act, api}: Props) {
   if (!student) {
-    return <form onSubmit={event => {event.preventDefault(); void act(async () => {await api('join', {name}); setStudent(await api('student'));});}}>
-      <p>Join the class shop and receive your ice cream on this screen.</p>
-      <label>Your display name <input required maxLength={40} autoComplete="nickname" value={name} onChange={event => setName(event.target.value)}/></label>
-      <button disabled={sending}>Join the shop</button>
+    return <form className="student-join" onSubmit={event => {event.preventDefault(); void act(async () => {await api('join', {name}); setStudent(await api('student'));});}}>
+      <p className="student-join-intro">Step inside our ice cream parlour. Your order goes to a real server that serves the whole class at once.</p>
+      <label className="student-join-label" htmlFor="student-name">Your display name</label>
+      <input id="student-name" required maxLength={40} autoComplete="nickname" placeholder="e.g. Sadia" value={name} onChange={event => setName(event.target.value)}/>
+      <p className="student-join-hint">Classmates will see this name in the shop.</p>
+      <button disabled={sending}>Enter the parlour</button>
     </form>;
   }
   const order = student.order;
