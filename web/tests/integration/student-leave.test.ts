@@ -87,3 +87,39 @@ describe('Order history is kept per student and cleared on leave', () => {
     expect((await sadia.get('/api/student')).body.history).toEqual([]);
   });
 });
+
+describe('Live shop snapshot endpoint', () => {
+  let backend: net.Server, bridge: BridgeServer;
+  beforeAll(async () => {
+    backend = net.createServer(socket => socket.once('data', () => setTimeout(() => socket.end('OK BOOKED\n'), 300)));
+    await new Promise<void>(resolve => backend.listen(0, '127.0.0.1', resolve));
+    bridge = new BridgeServer({bridgePort: 3095, backendPort: (backend.address() as net.AddressInfo).port, adminPassword: 'shop-test-secret'});
+  });
+  afterAll(async () => { await bridge.stop(); await new Promise<void>(resolve => backend.close(() => resolve())); });
+
+  it('is only for joined students', async () => {
+    expect((await request(bridge.getApp()).get('/api/shop')).status).toBe(401);
+  });
+
+  it('shows waiting customers by name in arrival order, marks "you", then lists them as served', async () => {
+    const ali = request.agent(bridge.getApp()), sadia = request.agent(bridge.getApp());
+    await ali.post('/api/join').send({name: 'Ali'});
+    await sadia.post('/api/join').send({name: 'Sadia'});
+    await ali.post('/api/order').send({});
+    await new Promise(r => setTimeout(r, 20));
+    await sadia.post('/api/order').send({});
+
+    const shop = (await sadia.get('/api/shop')).body;
+    const waiting = [...shop.counters, ...shop.line];
+    expect(waiting.map((p: any) => p.name)).toEqual(['Ali', 'Sadia']);
+    expect(waiting.find((p: any) => p.name === 'Sadia').you).toBe(true);
+    expect(waiting.find((p: any) => p.name === 'Ali').you).toBe(false);
+    expect(shop.estimated).toBe(true);
+    expect(JSON.stringify(shop)).not.toMatch(/cc_student|[0-9a-f]{8}-[0-9a-f]{4}-/);   // no tokens or order IDs leak
+
+    await new Promise(r => setTimeout(r, 700));
+    const after = (await sadia.get('/api/shop')).body;
+    expect(after.counters).toHaveLength(0);
+    expect(after.recent.map((r: any) => r.name).sort()).toEqual(['Ali', 'Sadia']);
+  });
+});
