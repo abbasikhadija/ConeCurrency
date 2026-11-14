@@ -416,8 +416,6 @@ To demonstrate the operating system concepts live in a presentation or lab evalu
 
 ## P3 and web screens- Sadia Fatima
 
-## Sadia Fatima's part in the project
-
 Alongside the team's work above, Sadia Fatima worked on the P3 concurrency engine and, for the GUI,
 the customer and admin screens of the web app (`web/src/student/`, `web/src/admin/`).
 
