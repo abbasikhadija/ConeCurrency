@@ -4,6 +4,8 @@
 **Scope:** the student side of the classroom web app (`web/`)
 **Branch:** `Sadia-branch` → pull request into `main`
 **Status:** complete — all items implemented and tested
+**GUI credits:** student interface by Sadia Fatima; the admin gelateria dashboard it sits beside
+is Abdul Qudoos's work and is unchanged by this plan.
 
 The classroom app already connects real students to the real C server. This
 plan makes the student side **explain what is happening inside the server**,

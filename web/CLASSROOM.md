@@ -9,7 +9,8 @@ orders alongside the original dashboard, bursts, tape and learning articles.
 ## Student experience
 
 *Designed and built by Sadia Fatima (P3). Plan and checklist:
-[docs/STUDENT_UI_PLAN.md](../docs/STUDENT_UI_PLAN.md).*
+[docs/STUDENT_UI_PLAN.md](../docs/STUDENT_UI_PLAN.md). The GUI is shared work: the admin
+dashboard is Abdul Qudoos's gelateria, and the student interface below is Sadia Fatima's.*
 
 | Screen | What the student sees |
 |---|---|

@@ -2,9 +2,9 @@
 import React from 'react';
 
 const TEAM = [
-  {name: 'Abdul Qudoos', role: 'P1 — Synchronization', work: 'Booking engine with POSIX mutex, thread-safe statistics, load tester, race-condition proof, original gelateria interfaces'},
+  {name: 'Abdul Qudoos', role: 'P1 — Synchronization', work: 'Booking engine with POSIX mutex, thread-safe statistics, load tester, race-condition proof; GUI: gelateria dashboard and Python/desktop interfaces'},
   {name: 'Khadija Abbasi', role: 'P2 — Networking & integration', work: 'TCP server, request handler, sequential mode, command-line options, benchmarks, classroom web bridge'},
-  {name: 'Sadia Fatima', role: 'P3 — Threads & scheduling', work: 'Bounded queue, worker thread pool, concurrent accept loop and clean shutdown, student interface'},
+  {name: 'Sadia Fatima', role: 'P3 — Threads & scheduling', work: 'Bounded queue, worker thread pool, concurrent accept loop and clean shutdown; GUI: classroom student interface and live shop floor'},
 ];
 
 export default function AboutUs({onBack}: {onBack: () => void}) {
