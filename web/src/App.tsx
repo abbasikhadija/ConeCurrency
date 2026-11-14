@@ -102,7 +102,7 @@ export const App: React.FC = () => {
     soundEngine.setEnabled(next);
     if (next) {
       soundEngine.playChime();
-      addToast('info', 'Gelateria audio effects enabled 🔔');
+      addToast('info', 'Parlour sound effects enabled 🔔');
     }
   };
 
@@ -232,7 +232,7 @@ export const App: React.FC = () => {
 
       {/* 4. Footer */}
       <footer className="parlour-footer" role="contentinfo">
-        <p>CSC-251L Operating Systems &bull; Person 1 Concurrency &amp; Synchronization Dashboard</p>
+        <p>CSC-251L Operating Systems &bull; Admin dashboard</p>
       </footer>
 
       {/* 5. Toasts and Modals */}

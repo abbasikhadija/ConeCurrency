@@ -71,10 +71,10 @@ export default function StudentView({student, setStudent, name, setName, sending
     return <div className="student-welcome">
       <ParlourFront/>
       <form className="student-join" onSubmit={event => {event.preventDefault(); void act(async () => {await api('join', {name}); setStudent(await api('student'));});}}>
-      <p className="student-join-intro">Step inside our ice cream parlour. Your order goes to a real server that serves the whole class at once.</p>
+      <p className="student-join-intro">Step inside our ice cream parlour. Your order goes to a real server that serves every customer at once.</p>
       <label className="student-join-label" htmlFor="student-name">Your display name</label>
       <input id="student-name" required maxLength={40} autoComplete="nickname" placeholder="e.g. Sadia" value={name} onChange={event => setName(event.target.value)}/>
-      <p className="student-join-hint">Classmates will see this name in the shop.</p>
+      <p className="student-join-hint">Other customers will see this name in the shop.</p>
       <button disabled={sending}>Enter the parlour</button>
     </form>
     </div>;

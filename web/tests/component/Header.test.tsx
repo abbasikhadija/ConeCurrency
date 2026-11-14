@@ -16,8 +16,8 @@ describe('Header Component', () => {
       />
     );
 
-    expect(screen.getByText('ConeCurrency Gelateria')).toBeInTheDocument();
-    expect(screen.getByText('CONCURRENT POSIX TICKET BOOKING ENGINE')).toBeInTheDocument();
+    expect(screen.getByText('ConeCurrency Ice Cream Parlour')).toBeInTheDocument();
+    expect(screen.getByText('CONCURRENT ICE CREAM ORDERING · POSIX THREADS')).toBeInTheDocument();
   });
 
   it('renders Backend Connected status pill when connected', () => {

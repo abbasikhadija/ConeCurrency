@@ -53,8 +53,8 @@ export const Header: React.FC<HeaderProps> = ({
           🍦
         </div>
         <div className="brand-titles">
-          <h1 className="brand-title">ConeCurrency Gelateria</h1>
-          <p className="brand-subtitle">CONCURRENT POSIX TICKET BOOKING ENGINE</p>
+          <h1 className="brand-title">ConeCurrency Ice Cream Parlour</h1>
+          <p className="brand-subtitle">CONCURRENT ICE CREAM ORDERING · POSIX THREADS</p>
         </div>
       </div>
 
@@ -82,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
 
         {/* Audio Toggle */}
-        <Tooltip content={soundEnabled ? 'Mute Sounds' : 'Enable Gelato Sounds'}>
+        <Tooltip content={soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}>
           <button
             className={`icon-action-btn ${soundEnabled ? 'active' : ''}`}
             onClick={onToggleSound}

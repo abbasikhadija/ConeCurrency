@@ -6,6 +6,9 @@ import StudentMenu from './student/StudentMenu.js';
 import EntryChoice from './student/EntryChoice.js';
 import AboutUs from './student/AboutUs.js';
 import StudentLearn from './student/StudentLearn.js';
+import AdminSignIn from './admin/AdminSignIn.js';
+import CustomerList from './admin/CustomerList.js';
+import './admin/admin.css';
 
 async function api(url: string, body?: object) {
   const response=await fetch('/api/'+url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,
@@ -38,7 +41,7 @@ export default function ClassroomApp() {
   const act=async(work:()=>Promise<any>)=>{setError('');setSending(true);try{await work();}catch(e){setError((e as Error).message);}finally{setSending(false);}};
   return <>
     <nav className="classroom-bar" aria-label="Classroom navigation">
-      <strong>ConeCurrency Classroom 🍦</strong>
+      <strong>ConeCurrency 🍦</strong>
       {admin?<button onClick={()=>void act(async()=>{await api('logout',{});setAdmin(false);})}>Log out</button>:
         <StudentMenu items={[
           login?{label:'Customer view',onSelect:()=>{setLogin(false);setView('shop');}}:{label:'Admin login',onSelect:()=>{setLogin(true);setView('shop');}},
@@ -59,17 +62,14 @@ export default function ClassroomApp() {
           <button disabled={sending || !!round?.pending}>Start new round</button>
         </form>
         <p>{round?.managed?`Round ${round.round}: ${round.config.mode}`:'External backend — managed controls require MANAGE_BACKEND=1.'} · Pending: {round?.pending??0}</p>
-        <h3>Classroom orders</h3>
-        <ul>{round?.students?.map((entry:any,index:number)=><li key={index}>{entry.name}: {entry.order?`${entry.order.state} ${entry.order.result?.status||''}`:'joined'}</li>)}</ul>
+        <CustomerList customers={round?.students}/>
       </section>
       <Dashboard/>
     </>:view==='about'?<main className="classroom-panel"><AboutUs onBack={()=>setView('shop')}/></main>:
       view==='learn'?<main className="classroom-panel student-learn-panel"><StudentLearn onBack={()=>setView('shop')}/></main>:<main className="classroom-panel">
-      <h1>Welcome to ConeCurrency 🍦</h1>
-      {login?<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);});}}>
-        <h2>Team admin sign-in</h2><label>Admin password <input type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/></label>
-        <button disabled={sending}>Sign in</button>
-      </form>:!student&&entry==='choose'?<EntryChoice onCustomer={()=>setEntry('customer')} onAdmin={()=>setLogin(true)}/>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api} onLearn={()=>setView('learn')}/>}
+      {!login && <h1>Welcome to ConeCurrency 🍦</h1>}
+      {login?<AdminSignIn password={password} setPassword={setPassword} sending={sending} onBack={()=>setLogin(false)}
+        onSubmit={()=>void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);})}/>:!student&&entry==='choose'?<EntryChoice onCustomer={()=>setEntry('customer')} onAdmin={()=>setLogin(true)}/>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api} onLearn={()=>setView('learn')}/>}
     </main>}
   </>;
 }

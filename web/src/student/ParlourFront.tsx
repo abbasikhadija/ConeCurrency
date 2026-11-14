@@ -11,7 +11,7 @@ export default function ParlourFront() {
       {BALLOONS.map((colour, i) => <span key={i} className={`balloon balloon-${colour}`} style={{animationDelay: `${i * 0.4}s`}}/>)}
     </div>
     <div className="parlour-building">
-      <div className="parlour-sign">🍦 GELATERIA</div>
+      <div className="parlour-sign">🍦 ICE CREAM</div>
       <div className="parlour-awning"/>
       <div className="parlour-wall">
         <div className="parlour-window">🍨 🍦 🍧</div>

@@ -6,7 +6,7 @@ export default function EntryChoice({onCustomer, onAdmin}: {onCustomer: () => vo
   return <div className="student-welcome">
     <ParlourFront/>
     <div className="entry-choice">
-      <p className="student-join-intro">Step inside our ice cream parlour. Every order goes to a real server that serves the whole class at once.</p>
+      <p className="student-join-intro">Step inside our ice cream parlour. Every order goes to a real server that serves every customer at once.</p>
       <button type="button" className="entry-card entry-customer" onClick={onCustomer}>
         <span className="entry-icon" aria-hidden="true">🍦</span>
         <span><strong>I'm a customer</strong><small>Order an ice cream and watch the shop serve you</small></span>

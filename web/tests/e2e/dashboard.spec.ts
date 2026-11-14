@@ -6,7 +6,7 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
     await page.goto('/');
     await expect(page.getByText('Backend Connected', {exact:true})).toBeVisible();
     // Wait for header and connection status
-    await expect(page.locator('.brand-title')).toContainText('ConeCurrency Gelateria');
+    await expect(page.locator('.brand-title')).toContainText('ConeCurrency Ice Cream Parlour');
   });
 
   test('completes single order flow (BOOK) and updates counter and register tape', async ({ page }) => {
