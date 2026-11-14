@@ -414,9 +414,9 @@ To demonstrate the operating system concepts live in a presentation or lab evalu
    - Start the server with only 5 tickets: `./ticket-server --mode concurrent --tickets 5 --workers 4`.
    - Click **Rush Hour (10 Cones)** $\rightarrow$ Exactly 5 orders succeed (`OK BOOKED`), and the remaining 5 immediately report red `ERR SOLD_OUT`.
 
-## P3 and web screens- Sadia Fatima
+## P3 and web screens
 
-Alongside the team's work above, Sadia Fatima worked on the P3 concurrency engine and, for the GUI,
+Alongside the team's work above,  P3 worked concurrency engine and, for the GUI,
 the customer and admin screens of the web app (`web/src/student/`, `web/src/admin/`).
 
 | Area | Work done | More details |
