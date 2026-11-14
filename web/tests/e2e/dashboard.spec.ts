@@ -74,7 +74,8 @@ test.describe('ConeCurrency Gelateria - Dashboard E2E Flows', () => {
     await page.keyboard.press('B');
     // Counters include earlier sessions; wait for this request's own reply
     // before clearing, otherwise its later response legitimately refills tape.
-    await expect(page.getByTestId('tape-stream')).toContainText('BOOK');
+    // The empty tape already says "Awaiting BOOK", so wait for an actual entry row.
+    await expect(page.getByTestId('tape-entry-row').first()).toContainText('BOOK');
     await expect(page.getByTestId('stat-booked')).not.toHaveText('0');
 
     await page.keyboard.press('C');
