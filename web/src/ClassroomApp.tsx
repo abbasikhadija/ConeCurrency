@@ -8,6 +8,7 @@ import AboutUs from './student/AboutUs.js';
 import StudentLearn from './student/StudentLearn.js';
 import AdminSignIn from './admin/AdminSignIn.js';
 import CustomerList from './admin/CustomerList.js';
+import ShiftBriefing, { ShiftConfig } from './admin/ShiftBriefing.js';
 import './admin/admin.css';
 
 async function api(url: string, body?: object) {
@@ -29,7 +30,7 @@ export default function ClassroomApp() {
   const [sending,setSending]=useState(false);
   const [view,setView]=useState<'shop'|'about'|'learn'>('shop');
   const [entry,setEntry]=useState<'choose'|'customer'>('choose');
-  const [config,setConfig]=useState({mode:'concurrent',tickets:50,workers:4,queue:32,delayMs:500});
+  const [config,setConfig]=useState<ShiftConfig>({mode:'concurrent',tickets:50,workers:4,queue:32,delayMs:500});
   useEffect(()=>{void api('session').then(data=>setAdmin(data.admin));void api('student').then(setStudent).catch(()=>{});},[]);
   useEffect(()=>{
     let mounted=true;
@@ -51,17 +52,9 @@ export default function ClassroomApp() {
     </nav>
     {error && <p role="alert" className="classroom-error">{error}</p>}
     {admin?<>
-      <section className="classroom-panel" aria-label="Admin round controls">
-        <h2>Admin — start a new round</h2>
-        <p>Mode changes restart the managed C server and replenish stock. Pending orders must finish first.</p>
-        <form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('round',config);setRound(await api('round'));});}}>
-          <label>Mode <select value={config.mode} onChange={event=>setConfig({...config,mode:event.target.value})}>
-            <option value="sequential">Sequential — one cashier</option><option value="concurrent">Concurrent — worker pool</option></select></label>
-          {(['tickets','workers','queue','delayMs'] as const).map(field=><label key={field}>{({tickets:'Stock',workers:'Workers',queue:'Queue capacity',delayMs:'Preparation delay (ms)'})[field]}
-            <input type="number" required min={field==='tickets'||field==='delayMs'?0:1} value={config[field]} onChange={event=>setConfig({...config,[field]:Number(event.target.value)})}/></label>)}
-          <button disabled={sending || !!round?.pending}>Start new round</button>
-        </form>
-        <p>{round?.managed?`Round ${round.round}: ${round.config.mode}`:'External backend — managed controls require MANAGE_BACKEND=1.'} · Pending: {round?.pending??0}</p>
+      <ShiftBriefing config={config} setConfig={setConfig} round={round} sending={sending}
+        onStart={()=>void act(async()=>{await api('round',config);setRound(await api('round'));})}/>
+      <section className="classroom-panel admin-customers-panel">
         <CustomerList customers={round?.students}/>
       </section>
       <Dashboard/>
