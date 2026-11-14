@@ -15,7 +15,7 @@ inventory. Both modes reuse the same handler and mutex-protected booking engine.
 | P1 — AQ / Abdul Qudoos | Booking mutex, inventory, statistics, load tester, race proof, demo script |
 | P2 — Khadija | Networking, request handler, sequential loop, CLI, benchmarks, shared setup |
 | P3 — Sadia Fatima | Bounded queue, worker pool, concurrent accept loop and shutdown |
-| GUI — Abdul Qudoos | Original Python interfaces and React gelateria retained; classroom bridge adds student/admin workflows |
+| GUI — Abdul Qudoos, Sadia Fatima | Original Python interfaces and React gelateria retained; classroom bridge adds student/admin workflows; customer and admin web screens |
 
 `make all` now builds one production binary supporting both server modes using
 all three owners' real modules. The P1 test substitute is retained only for P2's
@@ -414,12 +414,14 @@ To demonstrate the operating system concepts live in a presentation or lab evalu
    - Start the server with only 5 tickets: `./ticket-server --mode concurrent --tickets 5 --workers 4`.
    - Click **Rush Hour (10 Cones)** $\rightarrow$ Exactly 5 orders succeed (`OK BOOKED`), and the remaining 5 immediately report red `ERR SOLD_OUT`.
 
-## GUI and contributions — Sadia Fatima
+## P3 and web screens- Sadia Fatima
 
-Sadia Fatima built the P3 concurrency engine described above and, on the GUI, the
-customer and admin interfaces of the web app (`web/src/student/`, `web/src/admin/`).
+## Sadia Fatima's part in the project
 
-| Area | What Sadia built | Read more |
+Alongside the team's work above, Sadia Fatima worked on the P3 concurrency engine and, for the GUI,
+the customer and admin screens of the web app (`web/src/student/`, `web/src/admin/`).
+
+| Area | Work done | More details |
 | --- | --- | --- |
 | **Concurrency engine (C)** | Bounded thread-safe queue (mutex + condition variable), fixed worker thread pool, concurrent accept loop with `ERR BUSY` load shedding, clean Ctrl+C shutdown; unit, integration and sanitizer tests with their own CI workflow | [P3 concurrency engine](#p3-concurrency-engine), [design doc](docs/CONCURRENCY_ENGINE.md) |
 | **Customer interface (web)** | Animated parlour welcome, customer/admin choice, ☰ menu with About us and How it works, leave-and-return, wobbling-cone / sold-out / busy states, confetti, measured served time, order history, live shop floor (cashiers = worker threads, line = queue), "What's happening here?" guide | [Student experience](web/CLASSROOM.md#student-experience), [plan](docs/STUDENT_UI_PLAN.md) |
