@@ -7,8 +7,9 @@ import { existsSync } from 'node:fs';
 import type { BridgeServer, BridgeOptions, TapeLogEntry } from './bridge.js';
 
 type Round = {mode: 'sequential' | 'concurrent'; tickets: number; workers: number; queue: number; delayMs: number};
-type Order = {id: string; round: number; state: 'pending' | 'complete'; result?: TapeLogEntry};
-type Student = {name: string; expires: number; order?: Order};
+type Order = {id: string; round: number; state: 'pending' | 'complete'; result?: TapeLogEntry; finishedAt?: number};
+type Student = {name: string; expires: number; order?: Order; history?: Order[]};
+const HISTORY_LIMIT = 20;
 const hash = (value: string) => createHash('sha256').update(value).digest();
 const cookie = (req: IncomingMessage, key: string) => (req.headers.cookie || '').split(';').map(p => p.trim()).find(p => p.startsWith(key + '='))?.slice(key.length + 1);
 
@@ -54,7 +55,7 @@ export class Classroom {
       const existing = cookie(req,'cc_student');
       const token = existing && this.students.has(existing) ? existing : randomUUID();
       const previous = this.students.get(token);
-      this.students.set(token,{name,expires:Date.now()+8*3600000,order:previous?.order});
+      this.students.set(token,{name,expires:Date.now()+8*3600000,order:previous?.order,history:previous?.history});
       res.cookie('cc_student',token,{httpOnly:true,sameSite:'strict',secure:req.secure,maxAge:8*3600000});
       res.json({name});
     });
@@ -70,7 +71,8 @@ export class Classroom {
     app.get('/api/student', (req,res) => {
       const student=this.student(req);
       if (!student) {res.status(401).json({error:'Join the classroom first'});return;}
-      res.json({name:student.name,order:student.order,round:this.round,mode:this.config.mode,workers:this.config.workers,managed:!!this.child});
+      res.json({name:student.name,order:student.order,history:student.history??[],round:this.round,mode:this.config.mode,
+        workers:this.config.workers,delayMs:this.config.delayMs,managed:!!this.child});
     });
     app.post('/api/order', (req,res) => {
       const student=this.student(req);
@@ -83,7 +85,8 @@ export class Classroom {
       res.status(202).json(order);
       this.bridge.broadcast({type:'STUDENT_ORDER',name:student.name,order});
       void this.bridge.sendSingleTcpRequest('BOOK').then(result => {
-        order.result=result; order.state='complete';
+        order.result=result; order.state='complete'; order.finishedAt=Date.now();
+        student.history=[order,...(student.history??[])].slice(0,HISTORY_LIMIT);
         this.bridge.broadcast({type:'STUDENT_ORDER',name:student.name,order});
       });
     });

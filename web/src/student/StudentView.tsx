@@ -3,16 +3,20 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ParlourFront from './ParlourFront.js';
 import OrderVisual from './OrderVisual.js';
 import Celebration from './Celebration.js';
+import OrderHistory, { servedTimeText } from './OrderHistory.js';
 
 export type StudentOrder = {
   id: string;
   round: number;
   state: 'pending' | 'complete';
   result?: { status: string; rawResponse?: string; latencyMs?: number };
+  finishedAt?: number;
 };
 export type StudentState = {
   name: string;
   order?: StudentOrder;
+  history?: StudentOrder[];
+  delayMs?: number;
   round: number;
   mode: 'sequential' | 'concurrent';
   workers?: number;
@@ -80,12 +84,16 @@ export default function StudentView({student, setStudent, name, setName, sending
     <p className="student-mode">{shopModeText(student)}</p>
     <OrderVisual order={order}/>
     <p role="status">{orderMessage(order)}</p>
+    {/* The preparation delay is only known for rounds the bridge started itself. */}
+    {servedTimeText(order, student.managed ? student.delayMs : undefined) &&
+      <p className="served-time">{servedTimeText(order, student.managed ? student.delayMs : undefined)}</p>}
     <div className="student-actions">
       <button disabled={sending || pending} onClick={() => void act(async () => {const next = await api('order', {}); setStudent({...student, order: next});})}>{order ? 'Order another ice cream' : 'Order one ice cream'}</button>
       <button type="button" className="student-leave" disabled={sending || pending}
         title={pending ? 'Wait for your order to finish' : undefined}
         onClick={() => void act(async () => {await api('leave', {}); setStudent(null); setName('');})}>Leave shop</button>
     </div>
+    <OrderHistory history={student.history ?? []}/>
     {celebrating && <Celebration onLearn={onLearn} onClose={closeCelebration}/>}
   </>;
 }

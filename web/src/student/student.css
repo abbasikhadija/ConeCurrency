@@ -183,3 +183,18 @@
 @media (prefers-reduced-motion: reduce) {
   .order-emoji, .order-pending .order-emoji, .order-busy .order-emoji, .celebration { animation: none; }
 }
+
+/* ---------- Served time and history ---------- */
+.served-time { background: #fdf0f4; border-radius: 10px; padding: .6rem .9rem; line-height: 1.45; }
+.order-history { margin-top: 1.8rem; border-top: 2px dashed var(--cc-beige); padding-top: 1rem; }
+.order-history h3 { margin: 0 0 .5rem; }
+.order-history-totals { display: flex; flex-wrap: wrap; gap: 1.2rem; margin: 0 0 .7rem; }
+.order-history-list { list-style: none; padding: 0; margin: 0; display: grid; gap: .35rem; max-height: 260px; overflow-y: auto; }
+.order-history-list li {
+  display: grid; grid-template-columns: 7rem 1fr 4rem; gap: .5rem; padding: .45rem .7rem;
+  border-radius: 8px; background: #f3e3c9; border-left: 4px solid var(--cc-brown);
+}
+.order-history-list li.history-ok { border-left-color: #2e9e6b; }
+.order-history-list li.history-sold_out { border-left-color: #c0392b; }
+.order-history-list li.history-busy { border-left-color: #e0a100; }
+.order-history-list li span:last-child { text-align: right; font-variant-numeric: tabular-nums; }

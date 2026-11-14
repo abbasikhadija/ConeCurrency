@@ -57,3 +57,33 @@ describe('Students can leave the shop and start again without a server restart',
     expect((await stranger.post('/api/leave').send({})).status).toBe(200);
   });
 });
+
+describe('Order history is kept per student and cleared on leave', () => {
+  let backend: net.Server, bridge: BridgeServer;
+  beforeAll(async () => {
+    backend = net.createServer(socket => socket.once('data', () => socket.end('OK BOOKED\n')));
+    await new Promise<void>(resolve => backend.listen(0, '127.0.0.1', resolve));
+    bridge = new BridgeServer({bridgePort: 3096, backendPort: (backend.address() as net.AddressInfo).port, adminPassword: 'history-test-secret'});
+  });
+  afterAll(async () => { await bridge.stop(); await new Promise<void>(resolve => backend.close(() => resolve())); });
+
+  it('records each finished order, newest first, with its measured time', async () => {
+    const sadia = request.agent(bridge.getApp()), other = request.agent(bridge.getApp());
+    await sadia.post('/api/join').send({name: 'Sadia'});
+    await other.post('/api/join').send({name: 'Other'});
+    const ids: string[] = [];
+    for (let i = 0; i < 2; i++) {
+      ids.unshift((await sadia.post('/api/order').send({})).body.id);
+      for (let j = 0; j < 100 && (await sadia.get('/api/student')).body.order?.state !== 'complete'; j++) await new Promise(r => setTimeout(r, 10));
+    }
+    const state = (await sadia.get('/api/student')).body;
+    expect(state.history.map((order: any) => order.id)).toEqual(ids);
+    expect(state.history[0].result.latencyMs).toBeGreaterThanOrEqual(0);
+    expect(typeof state.history[0].finishedAt).toBe('number');
+    expect((await other.get('/api/student')).body.history).toEqual([]);   // private to each student
+
+    await sadia.post('/api/leave').send({});
+    await sadia.post('/api/join').send({name: 'Sadia'});
+    expect((await sadia.get('/api/student')).body.history).toEqual([]);
+  });
+});
