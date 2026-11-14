@@ -4,7 +4,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import StudentView, { shopModeText, orderMessage, StudentState } from '../../src/student/StudentView';
 
 const base: StudentState = {name: 'Sadia', round: 3, mode: 'concurrent', workers: 4, managed: true};
-const props = (student: StudentState | null) => ({student, setStudent: vi.fn(), name: '', setName: vi.fn(), sending: false, act: vi.fn(), api: vi.fn()});
+// The shop floor polls the api; a never-settling promise keeps these tests focused on StudentView itself.
+const props = (student: StudentState | null) => ({student, setStudent: vi.fn(), name: '', setName: vi.fn(), sending: false, act: vi.fn(), api: vi.fn(() => new Promise<any>(() => {}))});
 
 describe('StudentView', () => {
   it('describes the shop mode in plain language', () => {

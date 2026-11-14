@@ -4,6 +4,7 @@ import ParlourFront from './ParlourFront.js';
 import OrderVisual from './OrderVisual.js';
 import Celebration from './Celebration.js';
 import OrderHistory, { servedTimeText } from './OrderHistory.js';
+import ShopFloor from './ShopFloor.js';
 
 export type StudentOrder = {
   id: string;
@@ -93,6 +94,7 @@ export default function StudentView({student, setStudent, name, setName, sending
         title={pending ? 'Wait for your order to finish' : undefined}
         onClick={() => void act(async () => {await api('leave', {}); setStudent(null); setName('');})}>Leave shop</button>
     </div>
+    <ShopFloor api={api}/>
     <OrderHistory history={student.history ?? []}/>
     {celebrating && <Celebration onLearn={onLearn} onClose={closeCelebration}/>}
   </>;
