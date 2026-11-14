@@ -222,6 +222,35 @@ make concurrent
 
 Full design, timelines and tests: [P3 concurrency engine](docs/CONCURRENCY_ENGINE.md).
 
+### See P3 live: the classroom shop floor
+
+The student page of the classroom app (`web/`, built by Sadia Fatima) turns the
+queue and worker pool into something the whole class can watch. Each student's
+order is a real `BOOK` to the C server.
+
+![Live shop floor: two cashiers serving while three customers wait](docs/images/student-shop-floor.png)
+
+| On screen | In the C server |
+|---|---|
+| Cashier counters | Worker threads started by `pool_start` (`--workers`) |
+| Waiting line with names | Clients waiting in the bounded queue (`queue_try_push` / `queue_pop`) |
+| "Room for 32" | Queue capacity (`--queue`) |
+| "Line full right now" | `ERR BUSY` from the accept loop when `queue_try_push` fails |
+| Served times stepping up (2.5 s, 2.5 s, 4.8 s…) | Customers waiting for a free worker |
+| Sleeping cashiers and SOLD OUT | Inventory exhausted; workers idle in `pthread_cond_wait` |
+
+![Sold out: idle cashiers and the list of who was served](docs/images/student-sold-out.png)
+
+Who stands at which counter is estimated from arrival order, because the real
+queue is first come, first served and the C server does not report positions.
+The welcome screen, confetti, order history and the rest of the student design
+are described in [web/CLASSROOM.md](web/CLASSROOM.md#student-experience).
+
+<p>
+  <img src="docs/images/student-welcome.png" alt="Welcome screen with the animated parlour" width="49%">
+  <img src="docs/images/student-celebration.png" alt="Celebration after a served order" width="49%">
+</p>
+
 ## P1 synchronization engine
 
 **Status update:** Person 1 (AQ) has delivered `src/booking.c`, `src/stats.c`, unit tests in `tests/test_booking.c`, the barrier-synchronized Python load tester `tools/load_test.py`, the race condition verification suite `tests/test_race.py`, and the unified demo script `scripts/demo.sh`.

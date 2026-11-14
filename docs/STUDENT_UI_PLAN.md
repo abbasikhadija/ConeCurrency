@@ -3,7 +3,7 @@
 **Author:** Sadia Fatima (P3 — Threads & Scheduling)
 **Scope:** the student side of the classroom web app (`web/`)
 **Branch:** `Sadia-branch` → pull request into `main`
-**Status:** planning — items are ticked as they are merged
+**Status:** complete — all items implemented and tested
 
 The classroom app already connects real students to the real C server. This
 plan makes the student side **explain what is happening inside the server**,
@@ -35,52 +35,52 @@ existing ice cream parlour look.
 Numbers in brackets refer to the original request list.
 
 ### Part A — Navigation and flow
-- [ ] **A1. Leave the shop / start again** [1, 2] — a *Leave shop* button that
+- [x] **A1. Leave the shop / start again** [1, 2] — a *Leave shop* button that
       clears the student session on the server, returning to the welcome screen
       without restarting the server. *Order again* stays available.
-- [ ] **A2. Remove developer text** [7, 8] — remove "Round N" and "Your order
+- [x] **A2. Remove developer text** [7, 8] — remove "Round N" and "Your order
       reserves one shared cone. Flavors in the dashboard are decorative."
-- [ ] **A3. Readable shop mode** [9] — show "1 cashier (sequential)" or
+- [x] **A3. Readable shop mode** [9] — show "1 cashier (sequential)" or
       "4 cashiers working at once (concurrent)" instead of the raw mode name.
 
 ### Part B — Welcome screen
-- [ ] **B1. Fix the layout** [3] — intro sentence on its own line, the
+- [x] **B1. Fix the layout** [3] — intro sentence on its own line, the
       *Your display name* label above its input, button below; works on phones.
-- [ ] **B2. Rename the button** [5] — "Enter the parlour".
-- [ ] **B3. Animated shop front** [3, 4] — illustrated parlour with balloons on
+- [x] **B2. Rename the button** [5] — "Enter the parlour".
+- [x] **B3. Animated shop front** [3, 4] — illustrated parlour with balloons on
       the roof and small customers walking in one by one (CSS / framer-motion,
       respects `prefers-reduced-motion`).
-- [ ] **B4. Two clear entry choices** [11] — "I'm a customer" and "Team admin".
+- [x] **B4. Two clear entry choices** [11] — "I'm a customer" and "Team admin".
 
 ### Part C — Menu and pages
-- [ ] **C1. Menu button (☰)** [11] — in the top bar, with a dropdown:
+- [x] **C1. Menu button (☰)** [11] — in the top bar, with a dropdown:
       *Admin login*, *How it works*, *About us*.
-- [ ] **C2. About us page** [11] — team members and roles, project vision,
+- [x] **C2. About us page** [11] — team members and roles, project vision,
       course, copyright line.
-- [ ] **C3. How it works for students** [12] — the existing learning articles,
+- [x] **C3. How it works for students** [12] — the existing learning articles,
       reachable from the menu without admin login.
 
 ### Part D — Ordering experience
-- [ ] **D1. Confetti on success** [13] — "Yay, your ice cream is ready!" with
+- [x] **D1. Confetti on success** [13] — "Yay, your ice cream is ready!" with
       confetti (`canvas-confetti`, already a dependency).
-- [ ] **D2. Clear sold-out and busy screens** [9] — an empty cone for
+- [x] **D2. Clear sold-out and busy screens** [9] — an empty cone for
       `ERR SOLD_OUT`; "the line is full, try again in a moment" for `ERR BUSY`.
-- [ ] **D3. "Learn while you eat?" prompt** [12] — after a successful order,
+- [x] **D3. "Learn while you eat?" prompt** [12] — after a successful order,
       offer to open *How it works*.
-- [ ] **D4. Served time** [6, 9] — "Served in 1.5 s — making a cone takes 0.5 s;
+- [x] **D4. Served time** [6, 9] — "Served in 1.5 s — making a cone takes 0.5 s;
       the rest was waiting for a free cashier."
-- [ ] **D5. My order history** [10] — at the bottom: totals (served / sold out /
+- [x] **D5. My order history** [10] — at the bottom: totals (served / sold out /
       busy) and a list of this student's orders with time, result and duration.
 
 ### Part E — Live shop floor (top-down view) [6]
-- [ ] **E1. Shop snapshot endpoint** — `GET /api/shop` for joined students.
-- [ ] **E2. Shop floor view** — cashier counters, the waiting line with real
+- [x] **E1. Shop snapshot endpoint** — `GET /api/shop` for joined students.
+- [x] **E2. Shop floor view** — cashier counters, the waiting line with real
       display names, the cone in preparation, stock left, and a sold-out state.
-- [ ] **E3. "You are here"** — highlight the student's own place in the line.
+- [x] **E3. "You are here"** — highlight the student's own place in the line.
 
 ### Part F — Documentation
-- [ ] **F1. Update `web/CLASSROOM.md`** with the new student features.
-- [ ] **F2. README** — illustrate P3's queue and worker pool through the shop floor.
+- [x] **F1. Update `web/CLASSROOM.md`** with the new student features.
+- [x] **F2. README** — illustrate P3's queue and worker pool through the shop floor.
 
 ---
 
@@ -175,7 +175,7 @@ the browser's device toolbar.
 
 ---
 
-## 7. Commit plan
+## 7. Commits
 
 | # | Commit | Items |
 |---|---|---|
@@ -185,9 +185,21 @@ the browser's device toolbar.
 | 4 | `feat(student): redesign welcome layout and rename entry button` | B1, B2 |
 | 5 | `feat(student): add animated parlour front` | B3 |
 | 6 | `feat(student): add entry choice and menu with about page` | B4, C1, C2 |
-| 7 | `feat(student): open how-it-works without admin login` | C3 |
-| 8 | `feat(student): celebrate served orders and clarify sold-out/busy` | D1, D2, D3 |
-| 9 | `feat(student): track order history and served time` | D4, D5 |
-| 10 | `feat(shop): add live shop snapshot endpoint` | E1 |
-| 11 | `feat(student): add live shop floor view` | E2, E3 |
-| 12 | `docs(ui): document student experience` | F1, F2 |
+| 7 | `fix(learn): quote the real OK BOOKED reply in How it works` | correctness fix found while doing C3 |
+| 8 | `feat(student): open how-it-works without admin login` | C3 |
+| 9 | `feat(student): celebrate served orders and clarify sold-out/busy` | D1, D2, D3 |
+| 10 | `feat(student): track order history and served time` | D4, D5 |
+| 11 | `feat(shop): add live shop snapshot endpoint` | E1 |
+| 12 | `feat(student): add live shop floor view` | E2, E3 |
+| 13 | `docs(ui): document student experience` | F1, F2 |
+
+## 8. Result
+
+- Web test suite: 42 tests before this work, 79 after (unit, component and
+  integration), plus the updated browser end-to-end flows.
+- Checked in a real browser against the real C server: five students ordering
+  at once in a managed round (3 cones, 2 workers) showed two customers at the
+  counters, three in line with estimated positions, then SOLD OUT with served
+  times of 2.5 s, 2.5 s and 4.8 s.
+- Known limit: the bridge waits up to 5 seconds for each C reply, so very long
+  preparation delays with few workers report late customers as not confirmed.

@@ -6,6 +6,55 @@ polls that student's private order result. Successful real BOOK replies display
 an ice cream on the phone. Admins see named participants and pending/completed
 orders alongside the original dashboard, bursts, tape and learning articles.
 
+## Student experience
+
+*Designed and built by Sadia Fatima (P3). Plan and checklist:
+[docs/STUDENT_UI_PLAN.md](../docs/STUDENT_UI_PLAN.md).*
+
+| Screen | What the student sees |
+|---|---|
+| Welcome | Animated parlour front, then a choice: **I'm a customer** or **Team admin** |
+| Join | Display name (shown to classmates) and **Enter the parlour** |
+| Order | Plain-language shop mode, a wobbling cone while waiting, then the result |
+| Served | Confetti and "Yay! Your ice cream is ready!", with an offer to open How it works |
+| Sold out / busy | A grey cone with a SOLD OUT stamp, or "the line is full right now" |
+| Served time | "Served in 1.5 s: making a cone takes 0.5 s, and about 1.0 s was spent waiting in line" |
+| Your orders | Totals and the last 20 orders with result and measured time |
+| Inside the parlour | Live shop floor: cashier counters, the waiting line with names, "you are here", cones left |
+| Menu (☰) | Admin login, How it works (read-only for students), About us |
+
+**Leave shop** ends the student session on the server and returns to the
+welcome screen; no server restart is needed. A student cannot leave while an
+order is still waiting for the C server.
+
+### Where the numbers come from
+
+| Shown | Source |
+|---|---|
+| Result of an order | The real C server reply relayed by the bridge |
+| Served time | The bridge's measured round trip for that order |
+| "Waiting in line" part | Measured time minus the round's preparation delay (managed rounds only) |
+| Cones left | Round stock minus cones booked this round (managed rounds only) |
+| Cashiers | The round's worker count (one in sequential mode) |
+| People at counters / in line | Students' pending orders in the order they were sent |
+
+The C server does not report which worker holds which customer, so the split
+between counters and the line is **estimated from arrival order** (the real
+queue is first come, first served) and the page says so. Admin bursts appear as
+anonymous "crowd" customers so the picture is not missing real load.
+
+### Student API
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /api/leave` | End the student session (409 while an order is pending) |
+| `GET /api/student` | Adds `history`, `workers` and `delayMs` to the existing fields |
+| `GET /api/shop` | Live shop snapshot for joined students; contains display names only |
+
+The bridge waits up to 5 seconds for each C reply. Keep
+*delay × (customers ÷ workers)* under that, for example 500–1000 ms with
+4 workers, or late customers are reported as not confirmed.
+
 ## Ubuntu setup
 
 Use Node.js 22 with npm, and the repository's Ubuntu C build dependencies.
