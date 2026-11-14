@@ -48,3 +48,14 @@ describe('Welcome form', () => {
     expect(screen.getByText(/Classmates will see this name/)).toBeInTheDocument();
   });
 });
+
+describe('Parlour front', () => {
+  it('shows the decorative shop on the welcome screen only', () => {
+    const {unmount} = render(<StudentView {...props(null)}/>);
+    const front = screen.getByTestId('parlour-front');
+    expect(front).toHaveAttribute('aria-hidden', 'true');   // decorative: hidden from screen readers
+    unmount();
+    render(<StudentView {...props(base)}/>);
+    expect(screen.queryByTestId('parlour-front')).not.toBeInTheDocument();
+  });
+});
