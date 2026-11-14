@@ -1,12 +1,12 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('ConeCurrency Gelateria - How it Works (Learn Section) E2E', () => {
+// How it works is a customer page (☰ Menu → How it works); the admin dashboard shows the parlour only.
+test.describe('ConeCurrency - How it works (customer page) E2E', () => {
   test.beforeEach(async ({ page }) => {
-    await page.request.post('/api/login', {data:{password:'classroom-test-only'}});
     await page.goto('/');
-    await expect(page.getByText('Backend Connected', {exact:true})).toBeVisible();
-    // Switch to Learn section
-    await page.getByText('How it Works').click();
+    await page.getByRole('button', {name: '☰ Menu'}).click();
+    await page.getByRole('menuitem', {name: 'How it works'}).click();
+    await expect(page.getByRole('heading', {name: 'How the parlour works 🍦'})).toBeVisible();
   });
 
   test('displays all 8 OS concept articles with code snippets and diagrams', async ({ page }) => {
@@ -29,12 +29,9 @@ test.describe('ConeCurrency Gelateria - How it Works (Learn Section) E2E', () =>
     await expect(page.locator('#order-one .article-body')).toBeVisible();
   });
 
-  test('"Try it" button jumps back to parlour dashboard and triggers action', async ({ page }) => {
-    const tryBtn = page.getByTestId('btn-try-order-one');
-    await tryBtn.click();
-
-    // Verifies it returned to the parlour counter
-    await expect(page.getByText('Parlour Counter')).toBeVisible();
+  test('customers get read-only articles without dashboard "try it" buttons', async ({ page }) => {
+    await expect(page.getByTestId('btn-try-order-one')).toHaveCount(0);
+    await page.getByRole('button', {name: 'Back to the shop'}).click();
+    await expect(page.getByRole('heading', {name: 'Welcome to ConeCurrency 🍦'})).toBeVisible();
   });
 });
-

@@ -257,3 +257,14 @@
 .shop-note { font-size: .78rem; color: #8a6a55; margin: .9rem 0 0; line-height: 1.4; }
 
 @media (prefers-reduced-motion: reduce) { .shop-progress, .shop-line li { animation: none; } }
+
+/* How it works page: pink buttons instead of the panel's default brown. */
+.classroom-panel.student-learn-panel .toc-link-btn {
+  background: #fdf0f4; color: var(--cc-espresso); border-left: 4px solid #e75480; border-radius: 8px;
+}
+.classroom-panel.student-learn-panel .toc-link-btn:hover { background: #f9d9e4; }
+.classroom-panel.student-learn-panel .toc-badge { color: #c2416a; }
+.classroom-panel.student-learn-panel .collapse-btn { background: #e75480; color: #fff; }
+.classroom-panel.student-learn-panel .collapse-btn:hover { background: #d4436f; }
+.classroom-panel.student-learn-panel .student-learn-head button { background: #e75480; }
+.classroom-panel.student-learn-panel .student-learn-head button:hover { background: #d4436f; }

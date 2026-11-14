@@ -188,18 +188,11 @@ export const App: React.FC = () => {
         onOpenHelp={() => setIsHelpOpen(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        showTabs={false}
       />
 
       {/* 2. Critical Race Condition Detection Banner */}
-      <RaceConditionBanner
-        isDetected={stats.raceConditionDetected}
-        onLearnMore={() => {
-          setActiveTab('learn');
-          setTimeout(() => {
-            document.getElementById('rush-hour')?.scrollIntoView({ behavior: 'smooth' });
-          }, 200);
-        }}
-      />
+      <RaceConditionBanner isDetected={stats.raceConditionDetected} />
 
       {/* 3. Main Body: Dashboard or Learn View */}
       {activeTab === 'dashboard' ? (

@@ -440,7 +440,7 @@
 /* Cone Structure and Assembly */
 .cone-assembly {
   display: flex;
-  flex-direction: column-reverse;
+  flex-direction: column; /* scoops (first child) sit on top of the cone */
   align-items: center;
   position: relative;
   z-index: 2;

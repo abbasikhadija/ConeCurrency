@@ -88,5 +88,11 @@ describe('Header Component', () => {
     fireEvent.click(soundBtn);
     expect(onToggleSound).toHaveBeenCalled();
   });
-});
 
+  it('can hide the navigation tabs for the parlour-only admin dashboard', () => {
+    render(<Header connectionStatus="connected" soundEnabled={false} onToggleSound={() => {}} onOpenHelp={() => {}}
+      activeTab="dashboard" onTabChange={() => {}} showTabs={false}/>);
+    expect(screen.queryByText('How it Works')).not.toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+});
