@@ -46,7 +46,7 @@ describe('Welcome form', () => {
     expect(label.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByRole('button', {name: 'Enter the parlour'})).toBeInTheDocument();
     expect(screen.queryByRole('button', {name: 'Join the shop'})).not.toBeInTheDocument();
-    expect(screen.getByText(/Classmates will see this name/)).toBeInTheDocument();
+    expect(screen.getByText(/Other customers will see this name/)).toBeInTheDocument();
   });
 });
 

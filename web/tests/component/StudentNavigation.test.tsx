@@ -41,8 +41,11 @@ describe('AboutUs', () => {
   it('credits all three team members and shows the copyright', () => {
     const back = vi.fn();
     render(<AboutUs onBack={back}/>);
-    for (const name of ['Abdul Qudoos', 'Khadija Abbasi', 'Sadia Fatima']) expect(screen.getByText(name)).toBeInTheDocument();
-    expect(screen.getByText(/© 2026/)).toBeInTheDocument();
+    const names = screen.getAllByRole('listitem').slice(0, 3).map(item => item.textContent);
+    expect(names).toEqual(['Sadia Fatima', 'Abdul Qudoos', 'Khadija Abbasi']);   // names only, Sadia first
+    expect(screen.getByText(/© 2026 Sadia Fatima, Abdul Qudoos and Khadija Abbasi/)).toBeInTheDocument();
+    expect(screen.getByRole('heading', {name: "What's inside"})).toBeInTheDocument();
+    expect(screen.queryByText(/Booking engine|TCP server, request handler|worker thread pool, concurrent accept/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', {name: 'Back to the shop'}));
     expect(back).toHaveBeenCalledOnce();
   });

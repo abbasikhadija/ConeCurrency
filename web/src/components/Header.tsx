@@ -10,6 +10,8 @@ interface HeaderProps {
   onOpenHelp: () => void;
   activeTab: 'dashboard' | 'learn';
   onTabChange: (tab: 'dashboard' | 'learn') => void;
+  /** Hide the Parlour / How it works tabs (the admin dashboard shows the parlour only). */
+  showTabs?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -18,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleSound,
   onOpenHelp,
   activeTab,
+  showTabs = true,
   onTabChange,
 }) => {
   const getStatusBadge = () => {
@@ -53,14 +56,14 @@ export const Header: React.FC<HeaderProps> = ({
           🍦
         </div>
         <div className="brand-titles">
-          <h1 className="brand-title">ConeCurrency Gelateria</h1>
-          <p className="brand-subtitle">CONCURRENT POSIX TICKET BOOKING ENGINE</p>
+          <h1 className="brand-title">ConeCurrency Ice Cream Parlour</h1>
+          <p className="brand-subtitle">CONCURRENT ICE CREAM ORDERING · POSIX THREADS</p>
         </div>
       </div>
 
       <div className="header-nav-actions">
         {/* Navigation Tabs */}
-        <div className="nav-tab-group" role="tablist" aria-label="Page Navigation">
+        {showTabs && <div className="nav-tab-group" role="tablist" aria-label="Page Navigation">
           <button
             role="tab"
             aria-selected={activeTab === 'dashboard'}
@@ -79,10 +82,10 @@ export const Header: React.FC<HeaderProps> = ({
             <BookOpen size={15} />
             <span>How it Works</span>
           </button>
-        </div>
+        </div>}
 
         {/* Audio Toggle */}
-        <Tooltip content={soundEnabled ? 'Mute Sounds' : 'Enable Gelato Sounds'}>
+        <Tooltip content={soundEnabled ? 'Mute Sounds' : 'Enable Sounds'}>
           <button
             className={`icon-action-btn ${soundEnabled ? 'active' : ''}`}
             onClick={onToggleSound}

@@ -10,9 +10,6 @@ not clear the dashboard. Browser connections now use same-origin /ws.
 ### Modern Visual Dashboard for a Concurrent POSIX Ticket-Booking Engine
 **Course:** CSC-251L Operating Systems (Person 1: Concurrency & Synchronization Dashboard)
 
-**GUI:** Abdul Qudoos (gelateria dashboard) and Sadia Fatima (classroom student interface —
-[Student experience](CLASSROOM.md#student-experience)).
-
 ---
 
 ## 🍨 Architecture Overview

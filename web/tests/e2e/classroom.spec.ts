@@ -17,7 +17,7 @@ test('admin login protects round control and logout revokes access',async({page}
   await page.getByRole('menuitem',{name:'Admin login'}).click();
   await page.getByLabel('Admin password').fill('classroom-test-only');
   await page.getByRole('button',{name:'Sign in'}).click();
-  await expect(page.getByRole('heading',{name:'Admin — start a new round'})).toBeVisible();
+  await expect(page.getByRole('heading',{name:"Today's shift"})).toBeVisible();
   await page.getByRole('button',{name:'Log out'}).click();
   await expect(page.getByRole('heading',{name:'Welcome to ConeCurrency 🍦'})).toBeVisible();
   expect((await page.request.post('/api/reset',{data:{}})).status()).toBe(401);

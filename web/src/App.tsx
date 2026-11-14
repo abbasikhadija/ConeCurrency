@@ -102,7 +102,7 @@ export const App: React.FC = () => {
     soundEngine.setEnabled(next);
     if (next) {
       soundEngine.playChime();
-      addToast('info', 'Gelateria audio effects enabled 🔔');
+      addToast('info', 'Parlour sound effects enabled 🔔');
     }
   };
 
@@ -188,18 +188,11 @@ export const App: React.FC = () => {
         onOpenHelp={() => setIsHelpOpen(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        showTabs={false}
       />
 
       {/* 2. Critical Race Condition Detection Banner */}
-      <RaceConditionBanner
-        isDetected={stats.raceConditionDetected}
-        onLearnMore={() => {
-          setActiveTab('learn');
-          setTimeout(() => {
-            document.getElementById('rush-hour')?.scrollIntoView({ behavior: 'smooth' });
-          }, 200);
-        }}
-      />
+      <RaceConditionBanner isDetected={stats.raceConditionDetected} />
 
       {/* 3. Main Body: Dashboard or Learn View */}
       {activeTab === 'dashboard' ? (
@@ -232,7 +225,7 @@ export const App: React.FC = () => {
 
       {/* 4. Footer */}
       <footer className="parlour-footer" role="contentinfo">
-        <p>CSC-251L Operating Systems &bull; Person 1 Concurrency &amp; Synchronization Dashboard</p>
+        <p>CSC-251L Operating Systems &bull; Admin dashboard</p>
       </footer>
 
       {/* 5. Toasts and Modals */}
