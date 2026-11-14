@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './App.js';
 import './student/student.css';
+import StudentView from './student/StudentView.js';
 
 async function api(url: string, body?: object) {
   const response=await fetch('/api/'+url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,
@@ -29,10 +30,6 @@ export default function ClassroomApp() {
     return()=>{mounted=false;clearInterval(timer);};
   },[admin]);
   const act=async(work:()=>Promise<any>)=>{setError('');setSending(true);try{await work();}catch(e){setError((e as Error).message);}finally{setSending(false);}};
-  const result=student?.order?.result;
-  const message=student?.order?.state==='pending'?'Order pending — waiting for the real server response.':
-    result?.status==='OK'?'Your ice cream is ready!':result?.status==='SOLD_OUT'?'This round is sold out.':
-    result?.status==='BUSY'?'The server queue is full. Please try again.':result?'Order could not be confirmed. Ask the team before retrying.':'Ready to order.';
   return <>
     <nav className="classroom-bar" aria-label="Classroom navigation">
       <strong>ConeCurrency Classroom 🍦</strong>
@@ -61,22 +58,7 @@ export default function ClassroomApp() {
       {login?<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);});}}>
         <h2>Team admin sign-in</h2><label>Admin password <input type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/></label>
         <button disabled={sending}>Sign in</button>
-      </form>:student?<>
-        <h2>Hello, {student.name}!</h2>
-        <p>Round {student.order?.round??student.round} · {student.managed?student.mode:'Team-operated server'}</p>
-        <div className="student-cone" aria-label={result?.status==='OK'?'Your ice cream':'Ice cream shop'}>{result?.status==='OK'?'🍦':'🏪'}</div>
-        <p role="status">{message}</p>
-        {student.order && <p>Order reference: {student.order.id}</p>}
-        <button disabled={sending || student.order?.state==='pending'} onClick={()=>void act(async()=>{const order=await api('order',{});setStudent({...student,order});})}>Order one ice cream</button>
-        <button type="button" className="student-leave" disabled={sending || student.order?.state==='pending'}
-          title={student.order?.state==='pending'?'Wait for your order to finish':undefined}
-          onClick={()=>void act(async()=>{await api('leave',{});setStudent(null);setName('');})}>Leave shop</button>
-        <p>Your order reserves one shared cone. Flavors in the dashboard are decorative.</p>
-      </>:<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('join',{name});setStudent(await api('student'));});}}>
-        <p>Join the class shop and receive your ice cream on this screen.</p>
-        <label>Your display name <input required maxLength={40} autoComplete="nickname" value={name} onChange={event=>setName(event.target.value)}/></label>
-        <button disabled={sending}>Join the shop</button>
-      </form>}
+      </form>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api}/>}
     </main>}
   </>;
 }

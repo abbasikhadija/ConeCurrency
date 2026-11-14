@@ -17,3 +17,6 @@
 @media (max-width: 650px) {
   .classroom-panel button.student-leave { margin: .75rem 0 0; }
 }
+
+.student-mode { color: var(--cc-brown); font-weight: 500; }
+.student-actions { display: flex; flex-wrap: wrap; align-items: center; }

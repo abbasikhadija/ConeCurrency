@@ -70,7 +70,7 @@ export class Classroom {
     app.get('/api/student', (req,res) => {
       const student=this.student(req);
       if (!student) {res.status(401).json({error:'Join the classroom first'});return;}
-      res.json({name:student.name,order:student.order,round:this.round,mode:this.config.mode,managed:!!this.child});
+      res.json({name:student.name,order:student.order,round:this.round,mode:this.config.mode,workers:this.config.workers,managed:!!this.child});
     });
     app.post('/api/order', (req,res) => {
       const student=this.student(req);
