@@ -17,14 +17,14 @@ export const ARTICLES: LearnArticle[] = [
     title: '1. Order 1 Cone (BOOK): The Single Request Lifecycle',
     badge: 'Core Synchronization',
     summary: 'How a simple click travels over WebSockets and raw TCP through the C accept loop into a thread worker.',
-    plainEnglish: `When a customer orders a single scoop, the browser cannot open raw TCP sockets directly due to web sandbox security. Instead, it sends a lightweight WebSocket frame to our Node.js bridge. The bridge opens a streaming TCP socket to the C server on port 8080 and writes "BOOK\\n". The main server thread accepts the descriptor, passes it to an idle POSIX worker thread, decrements the inventory under mutual exclusion, and replies with "OK CONE-0001\\n".`,
+    plainEnglish: `When a customer orders a single scoop, the browser cannot open raw TCP sockets directly due to web sandbox security. Instead, it sends a lightweight WebSocket frame to our Node.js bridge. The bridge opens a streaming TCP socket to the C server on port 8080 and writes "BOOK\\n". The main server thread accepts the descriptor, passes it to an idle POSIX worker thread, decrements the inventory under mutual exclusion, and replies with "OK BOOKED\\n".`,
     backendWalkthrough: `1. Browser emits WebSocket message { type: 'BOOK' }.
 2. Node.js bridge opens TCP socket to 127.0.0.1:8080 and transmits "BOOK\\n".
 3. C main thread poll() detects POLLIN on listener socket and calls accept().
 4. Client file descriptor (fd) is pushed to the bounded FIFO queue.
 5. An idle worker thread blocked on pthread_cond_wait wakes up and pops the fd.
 6. Worker calls handle_client(fd), sleeps for simulated work delay, takes pthread_mutex_lock(&inventory_lock), verifies remaining > 0, decrements remaining, and releases the lock.
-7. Worker transmits "OK CONE-XXXX\\n" back over TCP and closes the client socket.`,
+7. Worker transmits "OK BOOKED\\n" back over TCP and closes the client socket.`,
     cCodeSnippet: `// Worker thread execution in C
 void handle_client(int fd) {
     char req[64];
