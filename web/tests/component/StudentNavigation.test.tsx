@@ -47,3 +47,17 @@ describe('AboutUs', () => {
     expect(back).toHaveBeenCalledOnce();
   });
 });
+
+import StudentLearn from '../../src/student/StudentLearn';
+
+describe('StudentLearn', () => {
+  it('shows the learning articles without dashboard "try it" buttons', () => {
+    const back = vi.fn();
+    render(<StudentLearn onBack={back}/>);
+    expect(screen.getByRole('heading', {name: 'How the parlour works 🍦'})).toBeInTheDocument();
+    expect(screen.getByRole('region', {name: /Operating Systems Concurrency Documentation/})).toBeInTheDocument();
+    expect(screen.queryAllByTestId(/^btn-try-/)).toHaveLength(0);
+    fireEvent.click(screen.getAllByRole('button', {name: 'Back to the shop'})[0]);
+    expect(back).toHaveBeenCalledOnce();
+  });
+});

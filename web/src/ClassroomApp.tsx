@@ -5,6 +5,7 @@ import StudentView from './student/StudentView.js';
 import StudentMenu from './student/StudentMenu.js';
 import EntryChoice from './student/EntryChoice.js';
 import AboutUs from './student/AboutUs.js';
+import StudentLearn from './student/StudentLearn.js';
 
 async function api(url: string, body?: object) {
   const response=await fetch('/api/'+url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,
@@ -23,7 +24,7 @@ export default function ClassroomApp() {
   const [round,setRound]=useState<any>(null);
   const [error,setError]=useState('');
   const [sending,setSending]=useState(false);
-  const [view,setView]=useState<'shop'|'about'>('shop');
+  const [view,setView]=useState<'shop'|'about'|'learn'>('shop');
   const [entry,setEntry]=useState<'choose'|'customer'>('choose');
   const [config,setConfig]=useState({mode:'concurrent',tickets:50,workers:4,queue:32,delayMs:500});
   useEffect(()=>{void api('session').then(data=>setAdmin(data.admin));void api('student').then(setStudent).catch(()=>{});},[]);
@@ -41,6 +42,7 @@ export default function ClassroomApp() {
       {admin?<button onClick={()=>void act(async()=>{await api('logout',{});setAdmin(false);})}>Log out</button>:
         <StudentMenu items={[
           login?{label:'Customer view',onSelect:()=>{setLogin(false);setView('shop');}}:{label:'Admin login',onSelect:()=>{setLogin(true);setView('shop');}},
+          {label:'How it works',onSelect:()=>setView('learn')},
           {label:'About us',onSelect:()=>setView('about')},
         ]}/>}
     </nav>
@@ -61,7 +63,8 @@ export default function ClassroomApp() {
         <ul>{round?.students?.map((entry:any,index:number)=><li key={index}>{entry.name}: {entry.order?`${entry.order.state} ${entry.order.result?.status||''}`:'joined'}</li>)}</ul>
       </section>
       <Dashboard/>
-    </>:view==='about'?<main className="classroom-panel"><AboutUs onBack={()=>setView('shop')}/></main>:<main className="classroom-panel">
+    </>:view==='about'?<main className="classroom-panel"><AboutUs onBack={()=>setView('shop')}/></main>:
+      view==='learn'?<main className="classroom-panel student-learn-panel"><StudentLearn onBack={()=>setView('shop')}/></main>:<main className="classroom-panel">
       <h1>Welcome to ConeCurrency 🍦</h1>
       {login?<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);});}}>
         <h2>Team admin sign-in</h2><label>Admin password <input type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/></label>

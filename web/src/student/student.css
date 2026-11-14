@@ -145,3 +145,8 @@
 .about-team p { margin: .4rem 0 0; font-size: .92rem; line-height: 1.45; }
 .about-role { display: block; color: #e75480; font-size: .85rem; font-weight: 600; }
 .about-copyright { font-size: .85rem; color: #8a6a55; }
+
+/* ---------- How it works (students) ---------- */
+.classroom-panel.student-learn-panel { max-width: 1200px; }
+.student-learn-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.student-learn-head p { max-width: 720px; line-height: 1.55; margin: .3rem 0 0; }
