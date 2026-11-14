@@ -1,0 +1,19 @@
+/* Student interface styles — Sadia Fatima (P3). Palette matches classroom.css. */
+:root {
+  --cc-brown: #69412e;
+  --cc-espresso: #3e2c2a;
+  --cc-cream: #fffaf0;
+  --cc-beige: #d6bd9a;
+}
+
+/* Secondary action: outlined so it never competes with "Order one ice cream". */
+.classroom-panel button.student-leave {
+  background: transparent;
+  color: var(--cc-brown);
+  border: 2px solid var(--cc-brown);
+  margin-left: .75rem;
+}
+.classroom-panel button.student-leave:hover:not(:disabled) { background: #69412e14; }
+@media (max-width: 650px) {
+  .classroom-panel button.student-leave { margin: .75rem 0 0; }
+}

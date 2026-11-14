@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Dashboard from './App.js';
+import './student/student.css';
 
 async function api(url: string, body?: object) {
   const response=await fetch('/api/'+url,{method:body?'POST':'GET',headers:body?{'Content-Type':'application/json'}:undefined,
     body:body?JSON.stringify(body):undefined,credentials:'same-origin'});
   const data=await response.json();
-  if(!response.ok)throw new Error(data.error || 'Request failed');
+  if(!response.ok)throw Object.assign(new Error(data.error || 'Request failed'),{status:response.status});
   return data;
 }
 
@@ -22,7 +23,8 @@ export default function ClassroomApp() {
   useEffect(()=>{void api('session').then(data=>setAdmin(data.admin));void api('student').then(setStudent).catch(()=>{});},[]);
   useEffect(()=>{
     let mounted=true;
-    const refresh=()=>void api(admin?'round':'student').then(data=>{if(mounted){admin?setRound(data):setStudent(data);}}).catch(()=>{});
+    const refresh=()=>void api(admin?'round':'student').then(data=>{if(mounted){admin?setRound(data):setStudent(data);}})
+      .catch(error=>{if(mounted && !admin && error.status===401)setStudent(null);});
     refresh();const timer=setInterval(refresh,700);
     return()=>{mounted=false;clearInterval(timer);};
   },[admin]);
@@ -66,6 +68,9 @@ export default function ClassroomApp() {
         <p role="status">{message}</p>
         {student.order && <p>Order reference: {student.order.id}</p>}
         <button disabled={sending || student.order?.state==='pending'} onClick={()=>void act(async()=>{const order=await api('order',{});setStudent({...student,order});})}>Order one ice cream</button>
+        <button type="button" className="student-leave" disabled={sending || student.order?.state==='pending'}
+          title={student.order?.state==='pending'?'Wait for your order to finish':undefined}
+          onClick={()=>void act(async()=>{await api('leave',{});setStudent(null);setName('');})}>Leave shop</button>
         <p>Your order reserves one shared cone. Flavors in the dashboard are decorative.</p>
       </>:<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('join',{name});setStudent(await api('student'));});}}>
         <p>Join the class shop and receive your ice cream on this screen.</p>

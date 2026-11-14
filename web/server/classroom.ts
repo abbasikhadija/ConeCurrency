@@ -58,6 +58,15 @@ export class Classroom {
       res.cookie('cc_student',token,{httpOnly:true,sameSite:'strict',secure:req.secure,maxAge:8*3600000});
       res.json({name});
     });
+    app.post('/api/leave', (req,res) => {
+      const token = cookie(req,'cc_student') || '';
+      if (this.students.get(token)?.order?.state === 'pending') {
+        res.status(409).json({error:'Wait for your order to finish before leaving'});return;
+      }
+      this.students.delete(token);
+      res.clearCookie('cc_student');
+      res.json({ok:true});
+    });
     app.get('/api/student', (req,res) => {
       const student=this.student(req);
       if (!student) {res.status(401).json({error:'Join the classroom first'});return;}
