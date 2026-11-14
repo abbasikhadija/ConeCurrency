@@ -1,6 +1,8 @@
 // Student shop view — Sadia Fatima (P3)
-import React from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import ParlourFront from './ParlourFront.js';
+import OrderVisual from './OrderVisual.js';
+import Celebration from './Celebration.js';
 
 export type StudentOrder = {
   id: string;
@@ -25,6 +27,8 @@ type Props = {
   sending: boolean;
   act: (work: () => Promise<any>) => Promise<void>;
   api: Api;
+  /** Opens "How it works"; offered after a successful order. */
+  onLearn?: () => void;
 };
 
 /** Plain-language description of how the real C server is serving customers. */
@@ -46,7 +50,18 @@ export function orderMessage(order?: StudentOrder): string {
   }
 }
 
-export default function StudentView({student, setStudent, name, setName, sending, act, api}: Props) {
+export default function StudentView({student, setStudent, name, setName, sending, act, api, onLearn}: Props) {
+  const [celebrating, setCelebrating] = useState(false);
+  const lastSeen = useRef<{id?: string; pending: boolean}>({pending: false});
+  const order = student?.order;
+  // Celebrate only when *this screen* saw the order go from pending to served,
+  // not when an old result is shown again after a reload.
+  useEffect(() => {
+    const wasPending = lastSeen.current.pending && lastSeen.current.id === order?.id;
+    if (wasPending && order?.state === 'complete' && order.result?.status === 'OK') setCelebrating(true);
+    lastSeen.current = {id: order?.id, pending: order?.state === 'pending'};
+  }, [order?.id, order?.state, order?.result?.status]);
+  const closeCelebration = useCallback(() => setCelebrating(false), []);
   if (!student) {
     return <div className="student-welcome">
       <ParlourFront/>
@@ -59,19 +74,18 @@ export default function StudentView({student, setStudent, name, setName, sending
     </form>
     </div>;
   }
-  const order = student.order;
   const pending = order?.state === 'pending';
-  const served = order?.result?.status === 'OK';
   return <>
     <h2>Hello, {student.name}!</h2>
     <p className="student-mode">{shopModeText(student)}</p>
-    <div className="student-cone" aria-label={served ? 'Your ice cream' : 'Ice cream shop'}>{served ? '🍦' : '🏪'}</div>
+    <OrderVisual order={order}/>
     <p role="status">{orderMessage(order)}</p>
     <div className="student-actions">
-      <button disabled={sending || pending} onClick={() => void act(async () => {const next = await api('order', {}); setStudent({...student, order: next});})}>Order one ice cream</button>
+      <button disabled={sending || pending} onClick={() => void act(async () => {const next = await api('order', {}); setStudent({...student, order: next});})}>{order ? 'Order another ice cream' : 'Order one ice cream'}</button>
       <button type="button" className="student-leave" disabled={sending || pending}
         title={pending ? 'Wait for your order to finish' : undefined}
         onClick={() => void act(async () => {await api('leave', {}); setStudent(null); setName('');})}>Leave shop</button>
     </div>
+    {celebrating && <Celebration onLearn={onLearn} onClose={closeCelebration}/>}
   </>;
 }

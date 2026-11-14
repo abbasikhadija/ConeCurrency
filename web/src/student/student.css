@@ -150,3 +150,36 @@
 .classroom-panel.student-learn-panel { max-width: 1200px; }
 .student-learn-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
 .student-learn-head p { max-width: 720px; line-height: 1.55; margin: .3rem 0 0; }
+
+/* ---------- Order picture ---------- */
+.order-visual { position: relative; display: flex; flex-direction: column; align-items: center; min-height: 150px; margin: .5rem 0; }
+.order-emoji { font-size: 6.5rem; line-height: 1.1; animation: cone-arrival .6s ease-out; }
+.order-caption { font-weight: 600; color: var(--cc-brown); }
+.order-pending .order-emoji { animation: cone-wobble 1s ease-in-out infinite; }
+@keyframes cone-wobble { 0%, 100% { transform: rotate(-6deg) scale(.95); } 50% { transform: rotate(6deg) scale(1.02); } }
+.dots::after { content: '…'; display: inline-block; width: 1.2em; text-align: left; animation: dots 1.2s steps(4) infinite; overflow: hidden; vertical-align: bottom; }
+@keyframes dots { 0% { width: 0; } 100% { width: 1.2em; } }
+.order-sold-out .order-emoji { filter: grayscale(1); opacity: .45; }
+.order-stamp {
+  position: absolute; top: 40%; padding: .2rem .9rem; border: 4px solid #c0392b; border-radius: 8px; color: #c0392b;
+  font-weight: 800; letter-spacing: .1em; transform: rotate(-12deg); background: #fffaf0cc;
+}
+.order-busy .order-emoji { animation: cone-wobble 2s ease-in-out infinite; }
+
+/* ---------- Celebration pop-up ---------- */
+.celebration-backdrop { position: fixed; inset: 0; background: #3e2c2a66; display: grid; place-items: center; z-index: 50; padding: 1rem; }
+.celebration {
+  background: var(--cc-cream); border-radius: 20px; padding: 2rem; max-width: 440px; text-align: center;
+  box-shadow: 0 20px 45px #3e2c2a55; border: 3px solid #f4a6bd; animation: pop-in .35s cubic-bezier(.2, 1.4, .4, 1);
+}
+.celebration h2 { color: #e75480; margin: .3rem 0; }
+.celebration p { line-height: 1.5; }
+.celebration-cone { font-size: 4rem; }
+.celebration-actions { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; }
+.classroom-panel .celebration-actions button { background: #e75480; color: #fff; border: 0; border-radius: 10px; padding: .8rem 1.2rem; font: inherit; cursor: pointer; }
+.classroom-panel .celebration-actions button.student-leave { background: transparent; color: var(--cc-brown); border: 2px solid var(--cc-brown); margin: 0; }
+@keyframes pop-in { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .order-emoji, .order-pending .order-emoji, .order-busy .order-emoji, .celebration { animation: none; }
+}

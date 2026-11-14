@@ -69,7 +69,7 @@ export default function ClassroomApp() {
       {login?<form onSubmit={event=>{event.preventDefault();void act(async()=>{await api('login',{password});setPassword('');setAdmin(true);setLogin(false);});}}>
         <h2>Team admin sign-in</h2><label>Admin password <input type="password" autoComplete="current-password" required value={password} onChange={event=>setPassword(event.target.value)}/></label>
         <button disabled={sending}>Sign in</button>
-      </form>:!student&&entry==='choose'?<EntryChoice onCustomer={()=>setEntry('customer')} onAdmin={()=>setLogin(true)}/>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api}/>}
+      </form>:!student&&entry==='choose'?<EntryChoice onCustomer={()=>setEntry('customer')} onAdmin={()=>setLogin(true)}/>:<StudentView student={student} setStudent={setStudent} name={name} setName={setName} sending={sending} act={act} api={api} onLearn={()=>setView('learn')}/>}
     </main>}
   </>;
 }
