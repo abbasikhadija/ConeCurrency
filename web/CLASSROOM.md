@@ -44,6 +44,15 @@ between counters and the line is **estimated from arrival order** (the real
 queue is first come, first served) and the page says so. Admin bursts appear as
 anonymous "crowd" customers so the picture is not missing real load.
 
+### Customer guide
+
+A **❓ What's happening here?** button on the first screen and the name screen
+opens a short guide: why the customer is here, what happens to an order (cashier =
+worker thread, line = queue, freezer = lock), what every message means, and how to
+read the shop floor.
+
+![The customer guide](../docs/images/customer-guide.png)
+
 ### Student API
 
 | Endpoint | Purpose |
@@ -55,6 +64,30 @@ anonymous "crowd" customers so the picture is not missing real load.
 The bridge waits up to 5 seconds for each C reply. Keep
 *delay × (customers ÷ workers)* under that, for example 500–1000 ms with
 4 workers, or late customers are reported as not confirmed.
+
+## Admin experience
+
+*Designed and built by Sadia Fatima. Plan: [docs/ADMIN_UI_PLAN.md](../docs/ADMIN_UI_PLAN.md).
+The parlour dashboard below it is Abdul Qudoos's.*
+
+| Step | What the owner sees |
+|---|---|
+| Sign in | "Welcome back, owner": the owner's office, password label above the box |
+| Today's shift | The manager types a short briefing, one question at a time: service style (together or one at a time), cones in the freezer, cashiers on shift, places in the waiting line, time per cone. Each answer is an editable box. "Show everything" skips the typing; reduced-motion users see it all at once |
+| Live preview | Beside the briefing: freezer cones, cashiers on shift (one in one-at-a-time mode), waiting places and time per cone, updating as values change |
+| Heads-up | Warns when late customers would wait longer than the bridge's 5-second limit |
+| Status | "Shop open · shift 2 · 4 cashiers serve together", plus orders in progress |
+| Customers | Each customer with a state: browsing, being served, served, sold out, line full |
+| Dashboard | The parlour counter and register tape only; How it works is a customer page |
+
+<p>
+  <img src="../docs/images/admin-sign-in.png" alt="Owner sign-in" width="49%">
+  <img src="../docs/images/admin-shift-briefing.png" alt="Manager's shift briefing with live preview" width="49%">
+</p>
+
+The briefing's values map one-to-one to the C server's options:
+service style → `--mode`, cones → `--tickets`, cashiers → `--workers`,
+waiting places → `--queue`, time per cone → `--delay-ms`.
 
 ## Ubuntu setup
 

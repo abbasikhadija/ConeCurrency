@@ -14,8 +14,19 @@ inventory. Both modes reuse the same handler and mutex-protected booking engine.
 | --- | --- |
 | P1 — AQ / Abdul Qudoos | Booking mutex, inventory, statistics, load tester, race proof, demo script |
 | P2 — Khadija | Networking, request handler, sequential loop, CLI, benchmarks, shared setup |
-| P3 — Sadia-Fatima | Bounded queue, worker pool, concurrent accept loop and shutdown |
-| GUI — Abdul Qudoos & Sadia Fatima | Abdul Qudoos: original Python interfaces and the React gelateria dashboard. Sadia Fatima: classroom student interface (welcome, menu, live shop floor, order history, celebration). The classroom bridge adds student/admin workflows |
+| P3 — Sadia Fatima | Bounded queue, worker pool, concurrent accept loop and shutdown |
+| GUI — Abdul Qudoos & Sadia Fatima | Abdul Qudoos: original Python interfaces and the React gelateria dashboard. Sadia Fatima: customer interface (welcome, menu, live shop floor, order history, celebration, customer guide) and admin interface (owner sign-in, manager's shift briefing with live preview, customers list). The classroom bridge adds student/admin workflows |
+
+## Sadia Fatima's contributions
+
+| Area | What Sadia built | Read more |
+| --- | --- | --- |
+| **Concurrency engine (C)** | Bounded thread-safe queue (mutex + condition variable), fixed worker thread pool, concurrent accept loop with `ERR BUSY` load shedding, clean Ctrl+C shutdown; unit, integration and sanitizer tests with their own CI workflow | [P3 concurrency engine](#p3-concurrency-engine), [design doc](docs/CONCURRENCY_ENGINE.md) |
+| **Customer interface (web)** | Animated parlour welcome, customer/admin choice, ☰ menu with About us and How it works, leave-and-return, wobbling-cone / sold-out / busy states, confetti, measured served time, order history, live shop floor (cashiers = worker threads, line = queue), "What's happening here?" guide | [Student experience](web/CLASSROOM.md#student-experience), [plan](docs/STUDENT_UI_PLAN.md) |
+| **Admin interface (web)** | Owner sign-in, the manager's typed shift briefing with a live parlour preview, plain-language shift status, Customers list, parlour-only dashboard, scoops drawn on the cone, customer-facing wording throughout | [Admin experience](web/CLASSROOM.md#admin-experience), [plan](docs/ADMIN_UI_PLAN.md) |
+| **Fixes and checks** | Learning article now quotes the real `OK BOOKED` reply; found a cross-thread `server_stop` data race with ThreadSanitizer (see the design doc's known limitations); web tests grew from 42 to 96 | [Known limitations](docs/CONCURRENCY_ENGINE.md#known-limitations) |
+
+![The manager's shift briefing with the live parlour preview](docs/images/admin-shift-briefing.png)
 
 `make all` now builds one production binary supporting both server modes using
 all three owners' real modules. The P1 test substitute is retained only for P2's
