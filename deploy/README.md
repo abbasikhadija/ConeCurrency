@@ -114,6 +114,64 @@ second run. Two new integration checks cover same-origin HTTPS forwarding,
 secure cookies and admin protection through a local proxy. Runtime-only npm
 audit found no vulnerabilities; inherited development-tool advisories remain.
 The Ubuntu installer passed Bash syntax checking and the public workflow script
-passed Node syntax checking. These are preparation results: the Ubuntu install,
-real C execution, certificate issuance and public deployment are unverified
-until performed on the AWS instance.
+passed Node syntax checking. At that stage the Ubuntu install, real C execution,
+certificate issuance and public deployment had not yet been verified. The
+subsequent AWS verification results follow.
+
+## Verified AWS demo (18 November 2026)
+
+The demo was deployed on Ubuntu 24.04 in AWS Sydney (`ap-southeast-2`), using a
+`t3.small` instance with standard CPU credits. The launch configuration selected
+an encrypted 8 GiB gp3 root disk. The application revision is
+`8706291c890a668cf3e35ec21f408f5d9a5f45fa`.
+
+Temporary demo URL: **https://conecurrency.13-54-234-11.sslip.io**
+
+The installer completed the real C build/checks, web build and web integration
+checks on the instance. Let's Encrypt issued the certificate and nginx served
+the production application. The public verification script reported all passes:
+
+- HTTPS page, configured admin login and rejection of unauthenticated admin actions.
+- Secure admin cookie and authenticated WSS connection through nginx.
+- Sequential and concurrent managed C rounds: three students competing for two
+  cones produced exactly two bookings and one sold-out result in each mode;
+  completed orders appeared in history.
+- Managed reset replenished actual C inventory.
+
+The complete workflow check ran on the instance against its public HTTPS URL.
+An independent check from the development laptop also passed the public HTTPS
+page, configured login and unauthenticated admin rejection checks. Browser
+scenarios against both real C modes passed in Ubuntu CI; a physical-phone check
+is still for the team to perform before the classroom demonstration.
+
+### Open the classroom
+
+In your connected Ubuntu terminal, read the admin password privately:
+
+```sh
+sudo grep '^ADMIN_PASSWORD=' /etc/conecurrency/environment
+```
+
+Use the value after `=` on the website's Team admin sign-in screen. Do not share
+the password with classmates or include it in screenshots. Open a **fresh
+round** after verification, which intentionally used up test stock. Suggested
+initial settings: concurrent, 50 cones, 4 workers, queue 32, 100 ms preparation.
+Only admins can switch to sequential mode or start another round. Share the
+HTTPS URL for classmates to join by name.
+
+Direct SSH from the development laptop timed out. The team connected through
+EC2 Instance Connect after temporarily allowing SSH from AWS Sydney's published
+EC2 Instance Connect range `13.239.158.0/29`. Remove only that temporary allowance
+after setup; preserve the original restricted SSH rule and web ports 80/443.
+If AWS changes its service range, verify the current value in
+[AWS IP ranges](https://ip-ranges.amazonaws.com/ip-ranges.json) before using it
+again. Never open the bridge or C server ports publicly.
+
+If AWS reports `RequestExpired`, compare the laptop's UTC clock with AWS before
+retrying. The initial launch failed while the laptop was five hours behind;
+synchronizing Windows time resolved it. Keep automatic time synchronization on.
+
+This URL depends on the instance retaining its current public IPv4 address.
+Stop the server when temporarily unused, and follow the cleanup instructions
+above after the final demo. Hosting consumes AWS credits independently of any
+student certification voucher.
