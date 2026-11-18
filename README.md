@@ -8,6 +8,8 @@ ConeCurrency compares sequential and concurrent ice cream ordering using C,
 Linux TCP sockets and POSIX threads. One BOOK reserves one cone from shared
 inventory. Both modes reuse the same handler and mutex-protected booking engine.
 
+For a short public classroom demo, see [AWS deployment](deploy/README.md).
+
 ## Team contributions preserved
 
 | Owner | Original components used in the integrated application |

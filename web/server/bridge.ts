@@ -15,6 +15,7 @@ export interface BridgeOptions {
   backendHost?: string;
   backendPort?: number;
   bridgePort?: number;
+  bridgeHost?: string;
   initialStock?: number;
   adminPassword?: string;
   manageBackend?: boolean;
@@ -50,6 +51,7 @@ export class BridgeServer {
   private backendHost: string;
   private backendPort: number;
   private bridgePort: number;
+  private bridgeHost: string;
   private backendConnected: boolean = false;
   private healthCheckTimer: NodeJS.Timeout | null = null;
 
@@ -74,6 +76,7 @@ export class BridgeServer {
     this.backendHost = options.backendHost ?? PROTOCOL_CONFIG.DEFAULT_BACKEND_HOST;
     this.backendPort = options.backendPort ?? PROTOCOL_CONFIG.DEFAULT_BACKEND_PORT;
     this.bridgePort = options.bridgePort ?? PROTOCOL_CONFIG.DEFAULT_BRIDGE_PORT;
+    this.bridgeHost = options.bridgeHost ?? '0.0.0.0';
 
     for (const port of [this.backendPort, this.bridgePort]) {
       if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Ports must be 1..65535');
@@ -408,7 +411,7 @@ export class BridgeServer {
         this.setBackendConnected(isUp);
       }, 2500);
 
-      this.httpServer.listen(this.bridgePort, '0.0.0.0', () => {
+      this.httpServer.listen(this.bridgePort, this.bridgeHost, () => {
         console.log(`[Bridge Server] Running on http://127.0.0.1:${this.bridgePort} (Relaying to TCP ${this.backendHost}:${this.backendPort})`);
         resolve();
       });

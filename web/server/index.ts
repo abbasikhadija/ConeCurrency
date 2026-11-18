@@ -11,6 +11,7 @@ const bridge = new BridgeServer({
   serverPath: process.env.C_SERVER_PATH,
   initialStock: process.env.BACKEND_STOCK ? Number(process.env.BACKEND_STOCK) : undefined,
   bridgePort,
+  bridgeHost: process.env.BRIDGE_HOST,
   backendHost,
   backendPort,
 });
